@@ -1,0 +1,35 @@
+INSERT or REPLACE INTO subnets (
+    subnet,
+    serial,
+    lease_time,
+    gateway,
+    subnet_mask,
+    broadcast_address,
+    ntp_servers,
+    domain_name_servers,
+    domain_name
+) VALUES (
+    '10.0.0.0/24',
+    0,
+    14400,
+    '10.0.0.1',
+    '255.255.255.0',
+    '10.0.0.255',
+    NULL,
+    NULL,
+    NULL
+);
+
+INSERT or REPLACE INTO maps (
+    mac,
+    ip,
+    hostname,
+    subnet,
+    serial
+) VALUES (
+    '7c:c2:c6:43:19:fb',
+    '10.0.0.6',
+    NULL,
+    '10.0.0.0/24',
+    0
+);

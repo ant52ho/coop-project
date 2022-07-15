@@ -39,6 +39,10 @@ def reply_ip(conn):
     conn.send("10.0.0.1".encode(FORMAT))
 
 
+def forward(msg):
+    send(msg)
+
+
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
 
@@ -50,6 +54,9 @@ def handle_client(conn, addr):
 
         elif msg == 'get_ip':
             ip = reply_ip(conn)
+
+        elif len(msg) >= 2 and msg[:2] == 'f:':
+            forward(msg)
 
     conn.close()
 

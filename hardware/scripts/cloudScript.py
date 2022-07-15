@@ -44,6 +44,9 @@ def handle_client(conn, addr):
         elif msg == 'get_ip':
             ip = reply_ip(conn)
 
+        elif len(msg) >= 2 and msg[:2] == 'f:':
+            print('received forwarded message')
+
     conn.close()
 
 

@@ -8,7 +8,7 @@ import threading
 HEADER = 128  # strings should just be this long, right
 PORT = 5050  # this port will have to change for edge server
 #SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = '18.117.112.0'
+SERVER = '172.31.40.10'
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"

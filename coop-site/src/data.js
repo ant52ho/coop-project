@@ -1,11 +1,4 @@
-// this file tests js code.
-
-console.log("hello world");
-
-// today's task will be to query data from redis
-
-// below is a sample json object that may be queryed from redis
-const statusData = [
+let statusData = [
   { id: 1, ip: "10.0.0.1", status: "up", data1: 35, data2: 12, data3: 12 },
   { id: 2, ip: "10.0.0.2", status: "up", data1: 42, data2: 43, data3: 19 },
   { id: 3, ip: "10.0.0.3", status: "up", data1: 45, data2: 65, data3: 8 },
@@ -18,19 +11,10 @@ const statusData = [
   { id: 10, ip: "10.0.0.10", status: "up", data1: 65, data2: 15, data3: 76 },
 ];
 
-// to get all the values of a json object
-// console.log(Object.values(data[0]));
+export function getStatusData() {
+  return statusData;
+}
 
-// gets node status
-const getNodeStatus = new Promise((resolve, reject) => {
-  if (false) {
-    return setTimeout(() => reject(new Error("Users not found")), 250);
-  }
-  setTimeout(function () {
-    resolve(data);
-  }, 1500);
-});
-
-getNodeStatus.then((retval) => {
-  console.log(retval);
-});
+export function getStatusData(number) {
+  return invoices.find((invoice) => invoice.number === number);
+}

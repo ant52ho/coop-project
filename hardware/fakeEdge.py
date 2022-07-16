@@ -40,11 +40,29 @@ def reply_ip(conn):
 
 
 def forward(msg, cloudClient):
-    send(msg, cloudClient)
+    try:
+        send(msg, cloudClient)
+    except Exception as e:  # attribute error, connectionAbortedError
+        print("unable to forward message")
+        return False
+    return True
 
 
-def handle_client(conn, addr):
+def tempStore(r, cmd):
+    r.rpush('temp', cmd)
+
+
+def emptyTempStore(r, cloudClient):
+    while r.exists('temp'):
+        retval = r.lpop('temp')
+        forward(retval, cloudClient)
+
+    return True
+
+
+def handle_client(conn, addr, redisConnection):
     print(f"[NEW CONNECTION] {addr} connected.")
+    redisEmpty = True
 
     while True:
         msg = recv(conn, addr)
@@ -56,7 +74,12 @@ def handle_client(conn, addr):
             ip = reply_ip(conn)
 
         elif len(msg) >= 2 and msg[:2] == 'f:':
-            forward(msg, cloudClientGlobal)
+            retval = forward(msg, cloudClientGlobal)
+            if not retval:
+                tempStore(redisConnection, msg)
+                redisEmpty = False
+            if retval and not redisEmpty:
+                redisEmpty = emptyTempStore(redisConnection, cloudClientGlobal)
 
     conn.close()
 
@@ -76,7 +99,7 @@ def get_ip(cloudClient):
     return cloudClient.recv(HEADER).decode(FORMAT)
 
 
-def startEdgeServer():
+def startEdgeServer(redisConnection):
     edgeServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     edgeServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     edgeServer.bind(EDGE_ADDR)
@@ -85,7 +108,8 @@ def startEdgeServer():
     print(f"[LISTENING] Edge server is listening on {EDGE_SERVER}")
     while True:
         conn, addr = edgeServer.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(
+            target=handle_client, args=(conn, addr, redisConnection))
         thread.start()
 
         # this line might be inaccurate when using both at once
@@ -118,6 +142,7 @@ def maintainCloudClient():
         try:
             cloudClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             cloudClient.connect(CLOUD_ADDR)
+            global cloudClientGlobal
             cloudClientGlobal = cloudClient
             startCloudClient(cloudClient)
         except ConnectionRefusedError:
@@ -126,7 +151,11 @@ def maintainCloudClient():
 
 
 if __name__ == '__main__':
-    edgeThread = threading.Thread(target=startEdgeServer)
+    redisConnection = 'redis connection'
+    edgeThread = threading.Thread(
+        target=startEdgeServer, args=(redisConnection))
     cloudThread = threading.Thread(target=maintainCloudClient)
     edgeThread.start()
     cloudThread.start()
+    edgeThread.join()
+    cloudThread.join()

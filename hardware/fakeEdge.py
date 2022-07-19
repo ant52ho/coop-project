@@ -12,7 +12,7 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 # Cloud constants
 CLOUD_PORT = 5050  # this port will have to change for edge server
-CLOUD_SERVER = "18.117.112.0"
+CLOUD_SERVER = "18.191.64.205"
 CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
 
 # Edge constants
@@ -172,9 +172,9 @@ def sendData(entries, cloudClient):
     for i in range(entries):
         line = f.readline().split(',')
         # print(line)
-        select = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
+        select = [str(55), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                   line[windHighIndex], line[precipitationIndex]]
-        select = 'f:' + '-'.join(select)
+        select = 'f:' + ','.join(select)
         send(select, cloudClient)
         time.sleep(1)
     return True
@@ -183,7 +183,7 @@ def sendData(entries, cloudClient):
 if __name__ == '__main__':
     redisConnection = 'redis connection'
     edgeThread = threading.Thread(
-        target=startEdgeServer, args=(redisConnection))
+        target=startEdgeServer, args=(redisConnection,))
     cloudThread = threading.Thread(target=maintainCloudClient)
     edgeThread.start()
     cloudThread.start()

@@ -6,16 +6,19 @@ import threading
 import redis
 import os
 import time
-import threading as Thread
+import datetime
 
 # user defined constants:
 HEADER = 128  # strings should just be this long, right
 PORT = 5050  # this port will have to change for edge server
 #SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = '172.31.40.10'
+SERVER = '172.31.42.106'
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
+
+# key retention duration in redis
+RETENTION = 3600000  # retention in milliseconds
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -29,6 +32,7 @@ def resetRedisKeys():
 
 def restartRedis(conf):
     print("server starting...")
+    os.system('killall redis-server ' + conf)
     os.system('sudo redis-server ' + conf)
 
 
@@ -46,7 +50,7 @@ def reply_ip(conn):
     conn.send("10.0.0.1".encode(FORMAT))
 
 
-def handle_client(conn, addr):
+def handle_client(conn, addr, r):
     print(f"[NEW CONNECTION] {addr} connected.")
 
     while True:
@@ -62,21 +66,36 @@ def handle_client(conn, addr):
 
         elif len(msg) >= 2 and msg[:2] == 'f:':
             print('received forwarded message')
-            handleForwardedMessage(msg)
+            inputData(msg, r)
 
     conn.close()
 
 
-def handleForwardedMessage(msg):
-    # assuming message format is
-    # ie day-temp-temp-wind-precip
-    # ie f:2013-12-21-74-60-2-31
+def inputData(msg, r):
+    data = msg[2:].split(',')
+    id = 'sensor' + str(data[0])
+    day = data[1]
+
+    unixTime = int(time.mktime(
+        datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
+
+    commands = ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
+
+    for commandIndex in range(2, len(commands)):
+        newKey = id + ":" + commands[commandIndex]
+        if not r.exists(newKey):
+            r.ts().create(newKey)
+
+        r.ts().add(key=newKey, timestamp=unixTime,
+                   value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
+    print("stored in redis!")
     return True
 
 
 def start():
     # initiates the redis server
-    redis_thread = Thread(target=restartRedis, args=("redisCloud.conf"))
+    redis_thread = threading.Thread(
+        target=restartRedis, args=("redisCloud.conf",))
     redis_thread.start()
     time.sleep(3)
 
@@ -88,7 +107,7 @@ def start():
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
         conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(target=handle_client, args=(conn, addr, r))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 

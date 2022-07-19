@@ -12,6 +12,10 @@ if len(bindings.split(' ')) != 3:
 
 
 '''
-import generateData
+import time
+import datetime
+day = "2022-12-21"
+unixTime = time.mktime(
+    datetime.datetime.strptime(day, "%Y-%m-%d").timetuple())
 
-print(generateData.sendData(5))
+print(int(unixTime))

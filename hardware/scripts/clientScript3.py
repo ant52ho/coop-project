@@ -33,6 +33,12 @@ def get_ip(iface: str) -> str:
         return 'error'
 
 
+def get_id() -> int:
+    ip = get_ip('eth0')  # ie 10.0.0.3
+    id = ip[7:]
+    return int(id)
+
+
 def package_installed(pck):  # need to test if it works
     devnull = open(os.devnull, "w")
     retval = subprocess.call(
@@ -203,7 +209,7 @@ def startEdgeClient(edgeClient):
     #     try:
     #         msg = input()
     #         if msg == 'aah' or msg == DISCONNECT_MESSAGE:
-    #             send(DISCONNECT_MESSAGE)
+    #             send(DISCONNECT_MESSAGfE)
     #             break
     #         elif msg == 'get_ip':
     #             ip = get_ip(edgeClient)
@@ -226,28 +232,31 @@ def maintainEdgeClient():
         print('loop')
 
 
-# indices of interesting data
-dayIndex = 0
-tempHighIndex = 1
-tempLowIndex = 2
-windHighIndex = 15
-precipitationIndex = 18
-
 # this program mimicks sending data
 
 
 def sendData(entries, edgeClient):
+
+    # indices of interesting data
+    dayIndex = 0
+    tempHighIndex = 1
+    tempLowIndex = 2
+    windHighIndex = 15
+    precipitationIndex = 18
+
+    id = get_id()
+
     f = open("austin_weather.csv", "r")
     line = f.readline().split(',')
-    heading = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
+    heading = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                line[windHighIndex], line[precipitationIndex]]
     print(heading)
     for i in range(entries):
         line = f.readline().split(',')
         # print(line)
-        select = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
+        select = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                   line[windHighIndex], line[precipitationIndex]]
-        select = 'f:' + '-'.join(select)
+        select = 'f:' + ','.join(select)
         send(select, edgeClient)
         time.sleep(1)  # for debugging
     return True

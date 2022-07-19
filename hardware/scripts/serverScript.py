@@ -155,9 +155,9 @@ def startIBSS(ip="", channel=4, essid='AHTest'):
     return True
 
 
-def restartRedis():
+def restartRedis(conf):
     print("server starting...")
-    os.system('sudo redis-server redisTest.conf')
+    os.system('sudo redis-server ' + conf)
 
 
 def startDHCP():
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     os.system('sudo service redis-server stop')
 
     # initiates the redis server
-    redis_thread = Thread(target=restartRedis)
+    redis_thread = Thread(target=restartRedis, args=('redisTest.conf'))
     redis_thread.start()
     time.sleep(3)
 

@@ -1,6 +1,8 @@
+# setup for the edge server
+
 import os
 # get pip
-#sudo apt install python3 pip
+# sudo apt install python3 pip
 # note: The revpis come with pip
 
 # get python redis

@@ -121,12 +121,14 @@ def startCloudClient(cloudClient):
 
     send('hello world', cloudClient)
 
+    sendData(5, cloudClient)
+
     while True:
         try:
             msg = input()
             if msg == 'aah' or msg == DISCONNECT_MESSAGE:
                 send(DISCONNECT_MESSAGE)
-                break
+                return False
             elif msg == 'get_ip':
                 ip = get_ip(cloudClient)
                 print(ip)
@@ -134,7 +136,7 @@ def startCloudClient(cloudClient):
                 send(msg, cloudClient)
         except Exception as e:
             print("disconnected from cloud server")
-            break
+            return True
 
 
 def maintainCloudClient():
@@ -144,10 +146,38 @@ def maintainCloudClient():
             cloudClient.connect(CLOUD_ADDR)
             global cloudClientGlobal
             cloudClientGlobal = cloudClient
-            startCloudClient(cloudClient)
+            contClient = startCloudClient(cloudClient)
+            if not contClient:
+                break
+
         except ConnectionRefusedError:
             time.sleep(3)
         print('loop')
+
+
+# indices of interesting data
+dayIndex = 0
+tempHighIndex = 1
+tempLowIndex = 2
+windHighIndex = 15
+precipitationIndex = 18
+
+
+def sendData(entries, cloudClient):
+    f = open("austin_weather.csv", "r")
+    line = f.readline().split(',')
+    heading = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
+               line[windHighIndex], line[precipitationIndex]]
+    print(heading)
+    for i in range(entries):
+        line = f.readline().split(',')
+        # print(line)
+        select = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
+                  line[windHighIndex], line[precipitationIndex]]
+        select = 'f:' + '-'.join(select)
+        send(select, cloudClient)
+        time.sleep(1)
+    return True
 
 
 if __name__ == '__main__':

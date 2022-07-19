@@ -3,6 +3,10 @@
 
 import socket
 import threading
+import redis
+import os
+import time
+import threading as Thread
 
 # user defined constants:
 HEADER = 128  # strings should just be this long, right
@@ -16,6 +20,17 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(ADDR)
+
+
+def resetRedisKeys():
+    r = redis.Redis(host='127.0.0.1', port=6379, password='rat')
+    r.flushdb()
+
+
+def restartRedis(conf):
+    print("server starting...")
+    os.system('sudo redis-server ' + conf)
+
 
 # recv() receives a message and returns a basic reply
 
@@ -47,11 +62,28 @@ def handle_client(conn, addr):
 
         elif len(msg) >= 2 and msg[:2] == 'f:':
             print('received forwarded message')
+            handleForwardedMessage(msg)
 
     conn.close()
 
 
+def handleForwardedMessage(msg):
+    # assuming message format is
+    # ie day-temp-temp-wind-precip
+    # ie f:2013-12-21-74-60-2-31
+    return True
+
+
 def start():
+    # initiates the redis server
+    redis_thread = Thread(target=restartRedis, args=("redisCloud.conf"))
+    redis_thread.start()
+    time.sleep(3)
+
+    # connects to the redis server
+    r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
+
+    # initializes socket server
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:

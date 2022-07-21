@@ -8,14 +8,17 @@ import os
 
 # sudo apt-get install redis
 
-# get sqlite3
+# sudo apt-get install sqlite3
 
-# get redis
+# set up staticDHCPd
+# place dhcp folder here
+os.system("cd dhcp")
+os.system("install.sh")
+os.system("cd ..")
+
 
 # get bridge utils
 
-# set up staticDHCPd
-os.system("sudo bash /dhcp/staticDHCPd/install.sh")
 
 # create sqlite database (many sql commands, copy/paste)
 

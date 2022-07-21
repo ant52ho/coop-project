@@ -34,22 +34,34 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 (C) Neil Tallim, 2021 <neil.tallim@linux.com>
 """
-#Get the "conf" module from somewhere
-conf = None
-import os
-import sys
+# Get the "conf" module from somewhere
+from . import web
+from . import statistics
+from . import system
+import logging
+import libpydhcpserver.dhcp_types.rfc as rfc
+import libpydhcpserver.dhcp_types.conversion as conversion
+import inspect
 from importlib.machinery import SourceFileLoader
+import sys
+import os
+conf = None
 
-if 'STATICDHCPD_CONF_PATH' in os.environ:
-    conf_search_paths = [os.path.dirname(os.environ['STATICDHCPD_CONF_PATH'])]
-else:
-    conf_search_paths = [os.path.join(os.getcwd(), 'conf'), '/etc/staticDHCPd']
+# if 'STATICDHCPD_CONF_PATH' in os.environ:
+#     conf_search_paths = [os.path.dirname(os.environ['STATICDHCPD_CONF_PATH'])]
+# else:
+#     conf_search_paths = ['dhcp/staticDHCPd/conf',
+#                          os.path.join(os.getcwd(), 'conf'), '/etc/staticDHCPd']
+
+conf_search_paths = ['dhcp/staticDHCPd/conf',
+                     os.path.join(os.getcwd(), 'conf'), '/etc/staticDHCPd']
 
 for conf_path in conf_search_paths:
     extensions_path = os.path.join(conf_path, 'staticDHCPd_extensions')
     sys.path.append(conf_path)
-    try: #Attempt to import conf.py from the path
-        conf = SourceFileLoader('conf', os.path.join(conf_path, 'conf.py')).load_module()
+    try:  # Attempt to import conf.py from the path
+        conf = SourceFileLoader('conf', os.path.join(
+            conf_path, 'conf.py')).load_module()
         print(repr(conf))
         print(dir(conf))
     except IOError:
@@ -57,7 +69,8 @@ for conf_path in conf_search_paths:
     else:
         break
 else:
-    raise ImportError("Unable to find a suitable instance of conf.py; searched: {!r}".format(conf_search_paths))
+    raise ImportError(
+        "Unable to find a suitable instance of conf.py; searched: {!r}".format(conf_search_paths))
 
 del conf_search_paths
 del conf_path
@@ -65,12 +78,12 @@ del os
 del sys
 del SourceFileLoader
 
-#Options passed through from conf.py
-#For explanations, please consult that file.
+# Options passed through from conf.py
+# For explanations, please consult that file.
 ##############################################################################
 _defaults = {}
 
-#General settings
+# General settings
 #######################################
 _defaults.update({
     'DEBUG': False,
@@ -79,7 +92,7 @@ _defaults.update({
     'PID_FILE': None,
 })
 
-#Server settings
+# Server settings
 #######################################
 _defaults.update({
     'DHCP_RESPONSE_INTERFACE': '-',
@@ -89,7 +102,7 @@ _defaults.update({
     'PROXY_PORT': None,
 })
 
-#Database settings
+# Database settings
 #######################################
 _defaults.update({
     'USE_CACHE': False,
@@ -100,7 +113,7 @@ _defaults.update({
 
     'MEMCACHED_HOST': None,
     'MEMCACHED_PORT': 11211,
-    'MEMCACHED_AGE_TIME': 300, #5 minutes
+    'MEMCACHED_AGE_TIME': 300,  # 5 minutes
 
     'CASE_INSENSITIVE_MACS': False,
 
@@ -121,7 +134,7 @@ _defaults.update({
     'MYSQL_MAXIMUM_CONNECTIONS': 4,
 })
 
-#Server behaviour settings
+# Server behaviour settings
 #######################################
 _defaults.update({
     'ALLOW_LOCAL_DHCP': True,
@@ -138,7 +151,7 @@ _defaults.update({
     'SUSPEND_THRESHOLD': 10,
 })
 
-#Logging settings
+# Logging settings
 #######################################
 _defaults.update({
     'LOG_FILE': None,
@@ -147,7 +160,7 @@ _defaults.update({
     'LOG_CONSOLE_SEVERITY': 'INFO',
 })
 
-#Webservice settings
+# Webservice settings
 #######################################
 _defaults.update({
     'WEB_ENABLED': True,
@@ -169,7 +182,7 @@ _defaults.update({
     'WEB_HEADER_FAVICON': True,
 })
 
-#E-mail settings
+# E-mail settings
 #######################################
 _defaults.update({
     'EMAIL_ENABLED': False,
@@ -180,17 +193,18 @@ _defaults.update({
 })
 
 
-#Construct a unified namespace
+# Construct a unified namespace
 #######################################
 _REMAPPED_KEYS = {
-    #caching keys weren't very consistent and other caching models started to get introduced
+    # caching keys weren't very consistent and other caching models started to get introduced
     'CACHE_ON_DISK': 'DISK_CACHE',
     'PERSISTENT_CACHE': 'DISK_CACHE_PERSISTENT',
-    
-    #PXE_PORT was renamed to PROXY_PORT because its role was misunderstood
+
+    # PXE_PORT was renamed to PROXY_PORT because its role was misunderstood
     'PXE_PORT': 'PROXY_PORT',
-} #keys that have had name-changes since prior versions
-for key in [k for k in dir(conf) if k.isupper()]: #Copy everything that looks like a constant.
+}  # keys that have had name-changes since prior versions
+# Copy everything that looks like a constant.
+for key in [k for k in dir(conf) if k.isupper()]:
     new_key = _REMAPPED_KEYS.get(key, key)
     globals()[new_key] = getattr(conf, key)
 del _REMAPPED_KEYS
@@ -200,22 +214,22 @@ for (key, value) in _defaults.items():
         globals()[key] = value
 del _defaults
 
-#Bind known functions and handle backwards-compatibility
+# Bind known functions and handle backwards-compatibility
 #######################################
-import inspect
 if hasattr(conf, 'init'):
     init = conf.init
 else:
-    init = lambda *args, **kwargs : None
+    init = lambda *args, **kwargs: None
 if hasattr(conf, 'filterPacket'):
     filterPacket = conf.filterPacket
 else:
-    filterPacket = lambda *args, **kwargs : True
+    filterPacket = lambda *args, **kwargs: True
 
 if hasattr(conf, 'handleUnknownMAC'):
     if inspect.getargspec(conf.handleUnknownMAC).args == ['mac']:
-        #It's pre-2.0.0, so wrap it for backwards-compatibility
+        # It's pre-2.0.0, so wrap it for backwards-compatibility
         from .databases.generic import Definition
+
         def handleUnknownMAC(packet, method, mac, client_ip, relay_ip, port):
             result = conf.handleUnknownMAC(mac)
             if result is not None:
@@ -233,17 +247,18 @@ if hasattr(conf, 'handleUnknownMAC'):
     else:
         handleUnknownMAC = conf.handleUnknownMAC
 else:
-    handleUnknownMAC = lambda *args, **kwargs : None
+    handleUnknownMAC = lambda *args, **kwargs: None
 
 if hasattr(conf, 'filterRetrievedDefinitions'):
     filterRetrievedDefinitions = conf.filterRetrievedDefinitions
 else:
     def filterRetrievedDefinitions(definitions, *args, **kwargs):
-        raise ValueError('No handler exists for multi-definition matches; implement filterRetrievedDefinitions()')
+        raise ValueError(
+            'No handler exists for multi-definition matches; implement filterRetrievedDefinitions()')
 
 if hasattr(conf, 'loadDHCPPacket'):
     if inspect.getargspec(conf.loadDHCPPacket).args == ['packet', 'mac', 'client_ip', 'relay_ip', 'subnet', 'serial', 'pxe', 'vendor']:
-        #It's pre-2.0.0, so wrap it for backwards-compatibility
+        # It's pre-2.0.0, so wrap it for backwards-compatibility
         import collections
         __PXEOptions = collections.namedtuple("PXEOptions", (
             'client_system',
@@ -251,32 +266,36 @@ if hasattr(conf, 'loadDHCPPacket'):
             'uuid_guid',
         ))
         del collections
-        
+
         def loadDHCPPacket(packet, method, mac, definition, relay_ip, port, source_packet):
             vendor_class = None
             vendor_specific = None
             if source_packet.isOption('vendor_class'):
-                vendor_class = tuple(sorted(source_packet.getOption('vendor_class', convert=True).items()))
+                vendor_class = tuple(sorted(source_packet.getOption(
+                    'vendor_class', convert=True).items()))
             if source_packet.isOption('vendor_specific'):
-                vendor_specific = tuple((k, tuple(sorted(v.items()))) for (k, v) in sorted(source_packet.getOption('vendor_specific', convert=True).items()))
-                
+                vendor_specific = tuple((k, tuple(sorted(v.items()))) for (k, v) in sorted(
+                    source_packet.getOption('vendor_specific', convert=True).items()))
+
             pxe_options = None
             if port == PROXY_PORT:
-                option_93 = source_packet.getOption(93, convert=True) #client_system
-                option_94 = source_packet.getOption(94) #client_ndi
-                option_97 = source_packet.getOption(97) #uuid_guid
+                option_93 = source_packet.getOption(
+                    93, convert=True)  # client_system
+                option_94 = source_packet.getOption(94)  # client_ndi
+                option_97 = source_packet.getOption(97)  # uuid_guid
                 pxe_options = __PXEOptions(
                     option_93,
                     option_94 and tuple(option_94),
                     option_97 and (option_97[0], option_97[1:]),
                 )
-                
+
             return conf.loadDHCPPacket(
                 packet, mac, definition.ip, relay_ip, definition.subnet, definition.serial,
                 pxe_options,
                 (
                     source_packet.getOption('vendor_specific_information'),
-                    source_packet.getOption('vendor_class_identifier', convert=True),
+                    source_packet.getOption(
+                        'vendor_class_identifier', convert=True),
                     vendor_class,
                     vendor_specific,
                 ),
@@ -284,12 +303,11 @@ if hasattr(conf, 'loadDHCPPacket'):
     else:
         loadDHCPPacket = conf.loadDHCPPacket
 else:
-    loadDHCPPacket = lambda *args, **kwargs : True
+    loadDHCPPacket = lambda *args, **kwargs: True
 del inspect
 
-#Inject namespace elements into conf.
+# Inject namespace elements into conf.
 ##############################################################################
-import libpydhcpserver.dhcp_types.conversion as conversion
 conf.listToIP = conversion.listToIP
 conf.listToIPs = conversion.listToIPs
 conf.ipToList = conversion.ipToList
@@ -307,7 +325,6 @@ conf.strToPaddedList = conversion.strToPaddedList
 conf.listToStr = conversion.listToStr
 del conversion
 
-import libpydhcpserver.dhcp_types.rfc as rfc
 conf.rfc3046_decode = rfc.rfc3046_decode
 conf.rfc3925_decode = rfc.rfc3925_decode
 conf.rfc3925_125_decode = rfc.rfc3925_125_decode
@@ -326,22 +343,21 @@ conf.rfc5678_139 = rfc.rfc5678_139
 conf.rfc5678_140 = rfc.rfc5678_140
 del rfc
 
-import logging
 logger = logging.getLogger('conf')
 conf.writeLog = logger.warning
 conf.logger = logger
 del logger
 del logging
 
-from . import system
-from . import statistics
-from . import web
+
 class callbacks(object):
     """
     A data-namespace, used to isolate callback-management functions.
     """
-    systemAddReinitHandler = staticmethod(system.registerReinitialisationCallback)
-    systemRemoveReinitHandler = staticmethod(system.unregisterReinitialisationCallback)
+    systemAddReinitHandler = staticmethod(
+        system.registerReinitialisationCallback)
+    systemRemoveReinitHandler = staticmethod(
+        system.unregisterReinitialisationCallback)
     systemAddTickHandler = staticmethod(system.registerTickCallback)
     systemRemoveTickHandler = system.unregisterTickCallback
 
@@ -357,16 +373,19 @@ class callbacks(object):
     webRemoveDashboard = staticmethod(web.unregisterDashboardCallback)
     webAddMethod = staticmethod(web.registerMethodCallback)
     webRemoveMethod = staticmethod(web.unregisterMethodCallback)
+
+
 del system
 del statistics
 del web
 conf.callbacks = callbacks
 
+
 class _Namespace(object):
     """
     A data-namespace, used to centralise extensions-configuration values.
     """
-    __final = False #: If True, then no new layers will be created
+    __final = False  # : If True, then no new layers will be created
 
     def __init__(self, final=False):
         """
@@ -386,7 +405,8 @@ class _Namespace(object):
             return object.__getattr__(self, name)
 
         if self.__final:
-            raise AttributeError("Namespace does not contain '{}'".format(name))
+            raise AttributeError(
+                "Namespace does not contain '{}'".format(name))
         namespace = self.__class__(final=True)
         object.__setattr__(self, name, namespace)
         return namespace
@@ -398,7 +418,7 @@ class _Namespace(object):
 
         :return: An iterable object that generates ``(key, value)`` tuples.
         """
-        for key in [k for k in dir(self) if not k.startswith('_') and not k.startswith('extension_config_')]: #Copy everything that looks useful
+        for key in [k for k in dir(self) if not k.startswith('_') and not k.startswith('extension_config_')]:  # Copy everything that looks useful
             yield (key, getattr(self, key))
 
     def extension_config_dict(self):
@@ -443,6 +463,9 @@ class _Namespace(object):
         namespace.update(self.extension_config_iter())
         for key in required:
             if not key in namespace:
-                raise AttributeError("Merged result does not contain '{}'".format(key))
+                raise AttributeError(
+                    "Merged result does not contain '{}'".format(key))
         return namespace
+
+
 conf.extensions = _Namespace()

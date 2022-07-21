@@ -27,13 +27,13 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 # Cloud constants
 CLOUD_PORT = 5050  # this port will have to change for edge server
-CLOUD_SERVER = "18.117.112.0"
+CLOUD_SERVER = "18.219.10.248"
 CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
 
 # Edge constants
 EDGE_PORT = 5060
-EDGE_SERVER = socket.gethostbyname(socket.gethostname())
-#EDGE_SERVER = '10.0.0.1'
+#EDGE_SERVER = socket.gethostbyname(socket.gethostname())
+EDGE_SERVER = '10.0.0.1'
 EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
 
 # global variable
@@ -298,6 +298,7 @@ def maintainCloudClient():
             startCloudClient(cloudClient)
         except ConnectionRefusedError:
             time.sleep(3)
+            print('not connected to cloud server, retrying...')
         print('loop')
 
 
@@ -334,7 +335,9 @@ if __name__ == "__main__":
     sqliteConnection = ""
     try:
         sqliteConnection = sqlite3.connect(
-            '/home/pi/dhcp/staticDHCPd/dhcp.sqlite3')
+            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+        cursor = sqliteConnection.cursor()
+        print("connected to sqlitedb!")
     except sqlite3.Error as error:
         print("failed to connect to sqlite db")
 

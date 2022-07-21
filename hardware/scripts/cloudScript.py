@@ -93,6 +93,8 @@ def inputData(msg, r):
 
 
 def start():
+    os.system('sudo service redis-server stop')
+
     # initiates the redis server
     redis_thread = threading.Thread(
         target=restartRedis, args=("redisCloud.conf",))

@@ -1,12 +1,12 @@
 # setup for the edge server
 
 import os
-# get pip
-# sudo apt install python3 pip
+# sudo apt-get -y install python3 pip
 # note: The revpis come with pip
 
-# get python redis
 # sudo pip3 install redis
+
+# sudo apt-get install redis
 
 # get sqlite3
 
@@ -18,3 +18,5 @@ import os
 os.system("sudo bash /dhcp/staticDHCPd/install.sh")
 
 # create sqlite database (many sql commands, copy/paste)
+
+# bring over redisTest.conf

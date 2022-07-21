@@ -308,7 +308,7 @@ if __name__ == "__main__":
     os.system('sudo service redis-server stop')
 
     # initiates the redis server
-    redis_thread = Thread(target=restartRedis, args=('redisTest.conf'))
+    redis_thread = Thread(target=restartRedis, args=('redisTest.conf',))
     redis_thread.start()
     time.sleep(3)
 
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
     # starts edgeServer socket and cloudServer socket
     edgeThread = threading.Thread(
-        target=startEdgeServer, args=(r))
+        target=startEdgeServer, args=(r,))
     cloudThread = threading.Thread(target=maintainCloudClient)
     edgeThread.start()
     cloudThread.start()

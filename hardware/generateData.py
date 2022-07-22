@@ -6,7 +6,9 @@
 
 import time
 import datetime
-
+import redis
+import os
+import threading
 # key retention duration in redis
 RETENTION = 86400000  # retention in milliseconds
 
@@ -19,6 +21,12 @@ tempHighIndex = 1
 tempLowIndex = 2
 windHighIndex = 15
 precipitationIndex = 18
+
+
+def restartRedis(conf):
+    print("server starting...")
+    os.system('killall redis-server ' + conf)
+    os.system('sudo redis-server ' + conf)
 
 
 def inputData(msg, r):
@@ -42,7 +50,7 @@ def inputData(msg, r):
     return True
 
 
-def sendData(entries):
+def spSendData(entries, r, delay=0):
     f = open("austin_weather.csv", "r")
     line = f.readline().split(',')
     heading = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
@@ -54,9 +62,20 @@ def sendData(entries):
         select = [line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                   line[windHighIndex], line[precipitationIndex]]
         select = 'f:' + '-'.join(select)
-        print(select)
-        time.sleep(1)
+        inputData(select, r)
+        time.sleep(delay)
     return True
 
 
 if __name__ == '__main__':
+    os.system('sudo service redis-server stop')
+
+    # initiates the redis server
+    redis_thread = threading.Thread(
+        target=restartRedis, args=("redisCloud.conf",))
+    redis_thread.start()
+    time.sleep(3)
+
+    # connects to the redis server
+    r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
+    spSendData(100, r, 0)

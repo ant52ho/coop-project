@@ -198,7 +198,7 @@ def reply_ip(conn):
 
 
 def forward(msg, cloudClient):
-    send(msg, cloudClient)
+    return send(msg, cloudClient)
 
 
 def tempStore(r, cmd):
@@ -241,9 +241,13 @@ def handle_client(conn, addr, redisConnection):
 
 
 def send(msg, cloudClient):
-    message = msg.encode(FORMAT)
-    cloudClient.send(message)
-    print(cloudClient.recv(HEADER).decode(FORMAT))
+    try:
+        message = msg.encode(FORMAT)
+        cloudClient.send(message)
+        print(cloudClient.recv(HEADER).decode(FORMAT))
+        return True
+    except AttributeError:  # cloud client isn't connected
+        return False
 
 
 # to implement a new function, have the function send a string and receive a reply

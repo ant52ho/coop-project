@@ -34,9 +34,17 @@ def get_ip(iface: str) -> str:
 
 
 def get_id() -> int:
+    ip = get_ip('br0')
+    if ip[:2] == "10":
+        id = ip[7:]
+        print(id)
+        return int(id)
+
     ip = get_ip('eth0')  # ie 10.0.0.3
-    id = ip[7:]
-    return int(id)
+    if ip[:2] == "10":
+        id = ip[7:]
+        print(id)
+        return int(id)
 
 
 def package_installed(pck):  # need to test if it works
@@ -201,9 +209,7 @@ def startEdgeClient(edgeClient):
 
     send('hello world', edgeClient)
 
-    sendData(10, edgeClient)
-
-    send(DISCONNECT_MESSAGE, edgeClient)
+    sendData(10, edgeClient, all=True)
 
     # while True:
     #     try:
@@ -235,7 +241,7 @@ def maintainEdgeClient():
 # this program mimicks sending data
 
 
-def sendData(entries, edgeClient):
+def sendData(entries, edgeClient, all=False):
 
     # indices of interesting data
     dayIndex = 0
@@ -251,14 +257,21 @@ def sendData(entries, edgeClient):
     heading = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                line[windHighIndex], line[precipitationIndex]]
     print(heading)
-    for i in range(entries):
+    count = 0
+    while True:
+
+        if count == entries and all == False:
+            break
+
         line = f.readline().split(',')
         # print(line)
         select = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                   line[windHighIndex], line[precipitationIndex]]
+        print(select)
         select = 'f:' + ','.join(select)
         send(select, edgeClient)
         time.sleep(1)  # for debugging
+        count += 1
     return True
 
 

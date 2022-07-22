@@ -138,6 +138,8 @@ def isAdHoc():
 
 # starts the IBSS server
 # note: it will error if wpa_supplicant doesn't have p2p_disabled=1
+# alternatively, I will just constantly enable ibss, and disable/enable
+# the interface to activate it
 
 
 def startIBSS(ip="", channel=4, essid='AHTest'):
@@ -145,12 +147,12 @@ def startIBSS(ip="", channel=4, essid='AHTest'):
     if ip == "":
         ip_twin = get_ip_linux("eth0")
         ip = ip_twin[:5] + "1" + ip_twin[6:]
-    os.system('sudo ifconfig wlan0 down')
-    os.system('sudo iwconfig wlan0 channel ' + str(channel))
-    os.system('sudo iwconfig wlan0 mode ad-hoc')
-    os.system("sudo iwconfig wlan0 essid '" + essid + "'")
+    os.system('sudo ifup wlan0')
+    # os.system('sudo iwconfig wlan0 channel ' + str(channel)) # impossible on some pis
+    #os.system('sudo iwconfig wlan0 mode ad-hoc')
+    #os.system("sudo iwconfig wlan0 essid '" + essid + "'")
     os.system('sudo ifconfig wlan0 ' + ip)
-    os.system('sudo ip addr flush dev wlan0')
+    #os.system('sudo ip addr flush dev wlan0')
     os.system('sudo ip route add 10.0.1.0/24 via ' + ip)
     return True
 
@@ -389,7 +391,7 @@ if __name__ == "__main__":
                     endIBSSTimer = time.time()
                 if time.time() > endIBSSTimer + 5 and endIBSSTimer != 0:
                     print("lower ibss!")
-                    os.system('sudo ifconfig wlan0 down')
+                    os.system('sudo ifdown wlan0')
 
                     # checks if the right bindings are on redis
                     cmd = r.config_get("bind")

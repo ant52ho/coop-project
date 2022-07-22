@@ -30,7 +30,7 @@ DHCP_SERVER_IP = '10.0.0.1'
 # For details, see the configuration guide in the documentation.
 DATABASE_ENGINE = 'SQLite'
 
-SQLITE_FILE = '/home/pi/dhcp/staticDHCPd/dhcp.sqlite3'
+SQLITE_FILE = '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3'
 
 # Server behaviour
 ALLOW_LOCAL_DHCP = True

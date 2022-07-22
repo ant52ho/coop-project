@@ -8,3 +8,5 @@ import os
 
 os.system('sudo ifconfig eth0 10.0.0.1')
 os.system('sudo ip route add 10.0.0.0/24 via 10.0.0.1')
+os.system('sudo ifconfig eth1 10.0.0.11')
+os.system('sudo ip route add 10.0.0.10 via 10.0.0.11')

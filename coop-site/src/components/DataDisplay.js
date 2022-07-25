@@ -113,6 +113,10 @@ export const DataDisplay = () => {
     console.log(scope);
   };
 
+  useEffect(() => {
+    console.log(scope, ips, sensors, graphs, startDate, endDate)
+  })
+
   var id;
 
   return (

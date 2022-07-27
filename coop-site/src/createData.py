@@ -47,7 +47,7 @@ def inputData(msg, r):
             r.ts().create(newKey)
 
         r.ts().add(key=newKey, timestamp=unixTime,
-                   value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
+                   value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last', labels={"id": data[0], "sensor":commands[commandIndex]})
     print("stored in redis!")
     return True
 

@@ -8,12 +8,13 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { Stack, Autocomplete, TextField, Box } from "@mui/material";
+import { Stack, Autocomplete, TextField, Box, Button } from "@mui/material";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { useState, useEffect } from "react";
 import { MultiSelect } from "./MultiSelect";
+import { OutputGraphs } from "./OutputGraphs";
 
 export const DataDisplay = () => {
   const ipsList = [
@@ -57,6 +58,14 @@ export const DataDisplay = () => {
   const [ips, setIps] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [graphs, setGraphs] = useState(["Line"]);
+  const [cmd, setCmd] = useState({
+    graphs: graphs,
+    ips: ips,
+    sensors: sensors,
+    scope: scope,
+    startDate: startDate,
+    endDate: endDate,
+  });
 
   const location = useLocation();
   if (location.state) {
@@ -114,8 +123,23 @@ export const DataDisplay = () => {
   };
 
   useEffect(() => {
-    console.log(scope, ips, sensors, graphs, startDate, endDate)
-  })
+    // console.log("cmd", cmd);
+    // const retval = [graphs, ips, sensors, scope, startDate, endDate];
+    // console.log("graphs:", retval[0]);
+    // console.log("ips:", retval[1]);
+    // console.log("sensors:", retval[2]);
+    // console.log("scope:", retval[3]);
+    // if (isMoment(retval[4])) {
+    //   console.log("startDate:", retval[4].unix());
+    // } else {
+    //   console.log("startDate:", retval[4]);
+    // }
+    // if (isMoment(retval[5])) {
+    //   console.log("endDate:", retval[5].unix());
+    // } else {
+    //   console.log("endDate:", retval[5]);
+    // }
+  });
 
   var id;
 
@@ -168,6 +192,26 @@ export const DataDisplay = () => {
           </LocalizationProvider>
         </Stack>
       )}
+      <Box>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={(event) =>
+            setCmd({
+              graphs: graphs,
+              ips: ips,
+              sensors: sensors,
+              scope: scope,
+              startDate: startDate,
+              endDate: endDate,
+            })
+          }
+        >
+          Go!
+        </Button>
+      </Box>
+
+      <OutputGraphs cmd={cmd} />
 
       {graphs.includes("Line") && (
         <LineChart
@@ -183,6 +227,7 @@ export const DataDisplay = () => {
           <Legend />
           <Line type="monotone" dataKey="pv" stroke="#8884d8" />
           <Line type="monotone" dataKey="uv" stroke="#82ca9d" />
+          <Line type="monotone" dataKey="amt" stroke="#82ca9d" />
         </LineChart>
       )}
     </Stack>

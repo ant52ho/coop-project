@@ -56,3 +56,6 @@ CREATE INDEX case_insensitive_macs ON maps (mac COLLATE NOCASE);
 # create sqlite database (many sql commands, copy/paste)
 
 # bring over redisTest.conf
+
+# clone redistimeseries, redisjson
+# download rust

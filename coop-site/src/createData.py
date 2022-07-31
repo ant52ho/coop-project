@@ -1,4 +1,4 @@
-# this program creates some locally faked data. 
+# this program creates some locally faked data.
 # since this connects to redis, it is meant to be run in Ubuntu
 
 
@@ -44,10 +44,13 @@ def inputData(msg, r):
     for commandIndex in range(2, len(commands)):
         newKey = id + ":" + commands[commandIndex]
         if not r.exists(newKey):
-            r.ts().create(newKey)
+            r.ts().create(newKey, labels={
+                "id": data[0], "sensor": commands[commandIndex]})
 
         r.ts().add(key=newKey, timestamp=unixTime,
-                   value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last', labels={"id": data[0], "sensor":commands[commandIndex]})
+                   value=data[commandIndex],
+                   retention_msecs=RETENTION,
+                   duplicate_policy='last')
     print("stored in redis!")
     return True
 
@@ -97,10 +100,10 @@ if __name__ == '__main__':
 
     # connects to the redis server
     r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
-
+    r.flushdb()
 
     # entires, id, redis, delay, sendAll?
-    spSendData(100, 1, r, 0)
+    for id in range(1, 6):
+        spSendData(50, id, r, 0)
     print("data created!")
-
     redis_thread.join()

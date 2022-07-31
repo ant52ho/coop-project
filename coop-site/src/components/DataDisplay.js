@@ -12,13 +12,21 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Stack, Autocomplete, TextField, Box, Button } from "@mui/material";
+import {
+  Stack,
+  Autocomplete,
+  TextField,
+  Box,
+  Button,
+  Typography,
+} from "@mui/material";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { useState, useEffect, PureComponent } from "react";
+import { useState, useEffect } from "react";
 import { MultiSelect } from "./MultiSelect";
 import { OutputGraphs } from "./OutputGraphs";
+import moment from "moment";
 
 export const DataDisplay = () => {
   const ipsList = [
@@ -45,6 +53,7 @@ export const DataDisplay = () => {
     "1 week",
     "1 month",
     "Custom",
+    "",
   ];
 
   const graphList = [
@@ -58,7 +67,7 @@ export const DataDisplay = () => {
 
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [scope, setScope] = useState(null);
+  const [scope, setScope] = useState("");
   const [ips, setIps] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [graphs, setGraphs] = useState(["Line"]);
@@ -72,10 +81,11 @@ export const DataDisplay = () => {
     endDate: endDate,
     entries: entries,
   });
+  var valid = false;
 
   const location = useLocation();
   if (location.state) {
-    id = location.state.id;
+    const id = location.state.id;
     console.log(id);
     console.log(ips);
     setIps(["10.0.0." + id]);
@@ -135,51 +145,60 @@ export const DataDisplay = () => {
   };
 
   const handleSubmit = () => {
-    setCmd({
-      graphs: graphs,
-      ips: ips,
-      sensors: sensors,
-      scope: scope,
-      startDate: startDate,
-      endDate: endDate,
-      entries: entries,
-    });
+    if (valid) {
+      setCmd({
+        graphs: graphs,
+        ips: ips,
+        sensors: sensors,
+        scope: scope,
+        startDate: startDate,
+        endDate: endDate,
+        entries: entries,
+      });
+    }
   };
 
   useEffect(() => {
-    // console.log("cmd", cmd);
-    // const retval = [graphs, ips, sensors, scope, startDate, endDate];
-    // console.log("graphs:", retval[0]);
-    // console.log("ips:", retval[1]);
-    // console.log("sensors:", retval[2]);
-    // console.log("scope:", retval[3]);
-    // if (isMoment(retval[4])) {
-    //   console.log("startDate:", retval[4].unix());
-    // } else {
-    //   console.log("startDate:", retval[4]);
-    // }
-    // if (isMoment(retval[5])) {
-    //   console.log("endDate:", retval[5].unix());
-    // } else {
-    //   console.log("endDate:", retval[5]);
-    // }
-  });
+    console.log(entries);
+    valid =
+      ips.length !== 0 &&
+      graphs.length !== 0 &&
+      sensors.length !== 0 &&
+      entries != 0 &&
+      scope !== null &&
+      scope !== "";
 
-  var id;
+    if (scope && scope == "Custom") {
+      if (
+        (moment.isMoment(startDate) && !startDate.isValid()) ||
+        (moment.isMoment(endDate) && !endDate.isValid())
+      ) {
+        valid = false;
+      } else if (startDate > endDate) {
+        valid = false;
+      }
+    }
+
+    console.log(valid);
+    // console.log(startDate.isValid());
+  });
 
   return (
     <Stack direction="column" spacing={5}>
       <Stack direction="row" spacing={3} display={"border-box"}>
         <MultiSelect
           label="Graphs"
+          error={graphs.length === 0}
           options={graphList}
           value={graphs}
           handleChange={handleGraphChange}
         />
         <TextField
+          id="entries"
           sx={{ width: 200 }}
           defaultValue={1000}
-          id="max-entries"
+          error={entries == 0}
+          // value={entries}
           label="Max. Entries per Node"
           type="number"
           InputLabelProps={{
@@ -193,19 +212,28 @@ export const DataDisplay = () => {
           label="IPs"
           options={ipsList}
           value={ips}
+          error={ips.length === 0}
           handleChange={handleIPChange}
         />
         <MultiSelect
           label="Sensors"
           options={sensorList}
           value={sensors}
+          error={sensors.length === 0}
           handleChange={handleSensorChange}
         />
+
         <Autocomplete
           id="Time"
           options={timeList}
           sx={{ width: 200 }}
-          renderInput={(params) => <TextField {...params} label="Time" />}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Time"
+              error={scope === "" || scope === null}
+            />
+          )}
           freeSolo={false}
           value={scope}
           onChange={handleScopeChange}
@@ -218,19 +246,31 @@ export const DataDisplay = () => {
               label="Time Start"
               value={startDate}
               onChange={handleStartDateChange}
-              renderInput={(params) => <TextField {...params} />}
+              renderInput={(params) => (
+                <TextField {...params} error={startDate > endDate || !scope} />
+              )}
             />
             <DateTimePicker
               label="Time End"
               value={endDate}
               onChange={handleEndDateChange}
-              renderInput={(params) => <TextField {...params} />}
+              renderInput={(params) => (
+                <TextField {...params} error={startDate > endDate || !scope} />
+              )}
             />
           </LocalizationProvider>
         </Stack>
       )}
+      {startDate > endDate && scope === "Custom" && (
+        <Typography color="error"> Please enter a valid time </Typography>
+      )}
       <Box>
-        <Button variant="contained" size="large" onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={handleSubmit}
+          disabled={valid}
+        >
           Go!
         </Button>
       </Box>

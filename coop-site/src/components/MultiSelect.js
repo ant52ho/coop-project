@@ -23,12 +23,14 @@ export const MultiSelect = (props) => {
   const options = props.options;
   const selected = props.value;
   const label = props.label;
+  const error = props.error;
 
   return (
     <div>
       <FormControl sx={{ width: 200 }}>
         <InputLabel id={label + "labelID"}>{label}</InputLabel>
         <Select
+          error={error}
           labelId="{label + 'labelID'}"
           input={<OutlinedInput label={label} />}
           multiple

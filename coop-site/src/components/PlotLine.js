@@ -70,6 +70,7 @@ export const PlotLine = (props) => {
   var sensor = props.sensor;
   const ips = cmd.ips;
   var scope = cmd.scope;
+  const entries = cmd.entries;
   const [data, setData] = useState();
   var startDate = cmd.startDate;
   var endDate = cmd.endDate;
@@ -90,6 +91,7 @@ export const PlotLine = (props) => {
     "ips:" + ips.join(),
     "sensor:" + sensor,
     "scope:" + scope[0] + "," + scope[1],
+    "entries:" + entries,
   ].join("/");
 
   console.log(retval);

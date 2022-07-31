@@ -62,6 +62,7 @@ export const DataDisplay = () => {
   const [ips, setIps] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [graphs, setGraphs] = useState(["Line"]);
+  const [entries, setEntries] = useState(1000);
   const [cmd, setCmd] = useState({
     graphs: graphs,
     ips: ips,
@@ -69,6 +70,7 @@ export const DataDisplay = () => {
     scope: scope,
     startDate: startDate,
     endDate: endDate,
+    entries: entries,
   });
 
   const location = useLocation();
@@ -101,6 +103,12 @@ export const DataDisplay = () => {
     setGraphs(value);
   };
 
+  const handleEntriesChange = (event) => {
+    const value = event.target.value;
+    setEntries(value);
+    console.log(entries);
+  };
+
   const handleIPChange = (event) => {
     const value = event.target.value;
     if (value[value.length - 1] === "all") {
@@ -126,6 +134,18 @@ export const DataDisplay = () => {
     console.log(scope);
   };
 
+  const handleSubmit = () => {
+    setCmd({
+      graphs: graphs,
+      ips: ips,
+      sensors: sensors,
+      scope: scope,
+      startDate: startDate,
+      endDate: endDate,
+      entries: entries,
+    });
+  };
+
   useEffect(() => {
     // console.log("cmd", cmd);
     // const retval = [graphs, ips, sensors, scope, startDate, endDate];
@@ -149,12 +169,25 @@ export const DataDisplay = () => {
 
   return (
     <Stack direction="column" spacing={5}>
-      <MultiSelect
-        label="Graphs"
-        options={graphList}
-        value={graphs}
-        handleChange={handleGraphChange}
-      />
+      <Stack direction="row" spacing={3} display={"border-box"}>
+        <MultiSelect
+          label="Graphs"
+          options={graphList}
+          value={graphs}
+          handleChange={handleGraphChange}
+        />
+        <TextField
+          sx={{ width: 200 }}
+          defaultValue={1000}
+          id="max-entries"
+          label="Max. Entries per Node"
+          type="number"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          onChange={handleEntriesChange}
+        />
+      </Stack>
       <Stack direction="row" spacing={3} display={"border-box"}>
         <MultiSelect
           label="IPs"
@@ -197,20 +230,7 @@ export const DataDisplay = () => {
         </Stack>
       )}
       <Box>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={(event) =>
-            setCmd({
-              graphs: graphs,
-              ips: ips,
-              sensors: sensors,
-              scope: scope,
-              startDate: startDate,
-              endDate: endDate,
-            })
-          }
-        >
+        <Button variant="contained" size="large" onClick={handleSubmit}>
           Go!
         </Button>
       </Box>

@@ -65,8 +65,8 @@ export const DataDisplay = () => {
     "Graph 5",
   ];
 
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(moment());
+  const [endDate, setEndDate] = useState(moment());
   const [scope, setScope] = useState("");
   const [ips, setIps] = useState([]);
   const [sensors, setSensors] = useState([]);
@@ -168,15 +168,12 @@ export const DataDisplay = () => {
       scope !== null &&
       scope !== "";
 
-    if (scope && scope == "Custom") {
-      if (
-        (moment.isMoment(startDate) && !startDate.isValid()) ||
-        (moment.isMoment(endDate) && !endDate.isValid())
-      ) {
-        valid = false;
-      } else if (startDate > endDate) {
-        valid = false;
-      }
+    if (
+      scope &&
+      scope == "Custom" &&
+      (startDate > endDate || !startDate.isValid() || !endDate.isValid())
+    ) {
+      valid = false;
     }
 
     console.log(valid);
@@ -247,7 +244,10 @@ export const DataDisplay = () => {
               value={startDate}
               onChange={handleStartDateChange}
               renderInput={(params) => (
-                <TextField {...params} error={startDate > endDate || !scope} />
+                <TextField
+                  {...params}
+                  error={startDate > endDate || !scope || !startDate.isValid()}
+                />
               )}
             />
             <DateTimePicker
@@ -255,7 +255,10 @@ export const DataDisplay = () => {
               value={endDate}
               onChange={handleEndDateChange}
               renderInput={(params) => (
-                <TextField {...params} error={startDate > endDate || !scope} />
+                <TextField
+                  {...params}
+                  error={startDate > endDate || !scope || !endDate.isValid()}
+                />
               )}
             />
           </LocalizationProvider>

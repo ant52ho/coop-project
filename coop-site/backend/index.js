@@ -33,9 +33,34 @@ app.get("/api", async (req, res) => {
   }
 });
 
-// DB query
-// Sample input:
-// http://localhost:5000/ips:10.0.0.1,10.0.0.2/sensor:tempLow/scope:1659243943,1659287143/entries:998
+app.get("/favicon.ico", async (req, res) => {
+  try {
+    res.status(404).send("hello world");
+  } catch (e) {
+    console.error(e);
+  }
+});
+
+app.get("/sensors", async (req, res) => {
+  try {
+    // gets all the keys but status
+
+    var value = await redisClient.keys("sensor*:*[^status]");
+    const sensors = new Set();
+
+    console.log(value);
+
+    var temp;
+    for (var i = 0; i < value.length; i++) {
+      temp = value[i].split(":")[1];
+      sensors.add(temp);
+    }
+    console.log(Array.from(sensors));
+    res.status(200).send(Array.from(sensors));
+  } catch (e) {
+    console.error(e);
+  }
+});
 
 app.get("/status", async (req, res) => {
   var retval = [];
@@ -65,6 +90,9 @@ app.get("/status", async (req, res) => {
   }
 });
 
+// DB query
+// Sample input:
+// http://localhost:5000/ips:10.0.0.1,10.0.0.2/sensor:tempLow/scope:1659243943,1659287143/entries:998
 app.get("*", async (req, res) => {
   const url = req.originalUrl;
   console.log("url:", url);

@@ -67,6 +67,12 @@ export const MuiTable = () => {
       }
     };
     getData();
+
+    getData();
+    const interval = setInterval(() => {
+      getData();
+    }, 10000);
+    return () => clearInterval(interval);
   }, [reloadToggle]);
 
   return (

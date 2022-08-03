@@ -30,7 +30,7 @@ export const DataDisplay = () => {
   //   "10.0.0.10",
   // ];
 
-  const sensorList = ["Gas1", "Gas2", "Gas3", "Gas4", "Gas5", "Gas6"];
+  // const sensorList = ["Gas1", "Gas2", "Gas3", "Gas4", "Gas5", "Gas6"];
 
   const timeList = [
     "60 minutes",
@@ -87,6 +87,7 @@ export const DataDisplay = () => {
   });
   const [statusData, setStatusData] = useState([]);
   const [ipsList, setIpsList] = useState([]);
+  const [sensorList, setSensorList] = useState([]);
   const [reloadToggle, setReloadToggle] = useState(false);
 
   // const [valid, setValid] = useState(false);
@@ -198,9 +199,21 @@ export const DataDisplay = () => {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await axios.get("/status");
-        setStatusData(response.data);
-        console.log(response.data);
+        var tempIpsList = [];
+
+        // status query
+        const status = await axios.get("/status");
+        setStatusData(status.data);
+
+        for (var i = 0; i < status.data.length; i++) {
+          tempIpsList.push(status.data[i].ip);
+        }
+        setIpsList(tempIpsList);
+
+        // sensor query
+        const sensorsReq = await axios.get("/sensors");
+        console.log(sensorsReq);
+        setSensorList(sensorsReq.data);
       } catch (err) {
         setStatusData([]);
       }

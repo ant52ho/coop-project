@@ -13,6 +13,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Box } from "@mui/material";
+import { interpolateColors } from "../scripts/generateColour";
+import { interpolateRainbow } from "d3-scale-chromatic";
+import moment from "moment";
 
 function toSeconds(scope, startDate, endDate) {
   const date = (new Date().getTime() / 1000) | 0; // gets the current time in seconds
@@ -87,6 +90,25 @@ export const PlotLine = (props) => {
 
   console.log(retval);
 
+  const colorRangeInfo = {
+    colorStart: 0,
+    colorEnd: 1,
+    useEndAsStart: false,
+  };
+  const colours = interpolateColors(
+    ips.length,
+    interpolateRainbow,
+    colorRangeInfo
+  );
+
+  console.log("ips:", ips);
+
+  const t1 = 1390601996;
+  const t2 = 1391835599;
+
+  console.log(moment(t1));
+  console.log(moment(t2));
+
   // A one time useEffect render
   useEffect(() => {
     const getData = async () => {
@@ -127,9 +149,14 @@ export const PlotLine = (props) => {
               dataKey="timestamp"
               name="stature"
               domain={["dataMin", "dataMax"]}
-              unit="s"
+              unit=""
+              tickCount="10"
+              tickFormatter={(unixTime) =>
+                moment(unixTime * 1000).format("M/D")
+              }
+              // tickFormatter={(val) => val}
             />
-            <YAxis type="number" dataKey="value" name="weight" unit="" />
+            <YAxis type="number" dataKey="value" name="weight" unit="unit" />
             <ZAxis type="number" range={[100]} />
             <Tooltip cursor={{ strokeDasharray: "3 3" }} />
             <Legend />
@@ -138,7 +165,7 @@ export const PlotLine = (props) => {
                 key={i}
                 name={node.sensor}
                 data={node.data}
-                fill="#8884d8"
+                fill={colours[i]}
                 line
                 shape="circle"
               />

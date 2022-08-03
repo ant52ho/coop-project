@@ -40,6 +40,8 @@ def inputData(msg, r):
     unixTime = int(time.mktime(
         datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
 
+    print(unixTime)
+
     commands = ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
 
     for commandIndex in range(2, len(commands)):

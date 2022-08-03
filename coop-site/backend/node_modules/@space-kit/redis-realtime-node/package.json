@@ -1,0 +1,49 @@
+{
+  "name": "@space-kit/redis-realtime-node",
+  "version": "0.0.2",
+  "description": "Nodejs sdk for implementing redis realtime",
+  "keywords": [],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shamin/redis-realtime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shamin/redis-realtime/issues"
+  },
+  "homepage": "https://github.com/shamin/redis-realtime/tree/main/packages/redis-realtime-node#readme",
+  "scripts": {
+    "watch": "tsc --watch",
+    "start": "npm run watch",
+    "build": "tsc",
+    "lint": "eslint \"src/**/*.{ts,tsx,js}\" --max-warnings 0 --fix"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "redis": "^3.1.2",
+    "uuid": "^8.3.2",
+    "winston": "^3.3.3",
+    "ws": "^7.4.5"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.169",
+    "@types/node": "^15.0.3",
+    "@types/redis": "^2.8.28",
+    "@types/uuid": "^8.3.0",
+    "@types/ws": "^7.4.4",
+    "@typescript-eslint/eslint-plugin": "^4.19.0",
+    "@typescript-eslint/parser": "^4.19.0",
+    "eslint": "^7.22.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "prettier": "^2.2.1",
+    "typescript": "^4.2.3"
+  }
+}

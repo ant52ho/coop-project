@@ -99,9 +99,6 @@ export const PlotLine = (props) => {
   const formatShort = scope.format.split(";")[1];
   startDate = scope.start;
   endDate = scope.end;
-
-  console.log(retval);
-
   const colorRangeInfo = {
     colorStart: 0,
     colorEnd: 1,
@@ -119,7 +116,7 @@ export const PlotLine = (props) => {
       try {
         const response = await axios.get(retval);
         setBackendData(response.data);
-        console.log(response.data);
+        console.log("data collected:", response.data);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -130,6 +127,7 @@ export const PlotLine = (props) => {
     };
     getData();
   }, [toggle]);
+
   return (
     <Box display={"inline-block"}>
       {/* <Stack> */}
@@ -162,7 +160,6 @@ export const PlotLine = (props) => {
                 tickFormatter={(unixTime) =>
                   moment(unixTime * 1000).format(formatShort)
                 }
-                // tickFormatter={(val) => val}
               />
               <YAxis type="number" dataKey="value" name="weight" unit="unit" />
               <ZAxis type="number" range={[100]} />

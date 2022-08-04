@@ -99,7 +99,6 @@ export const DataDisplay = () => {
   }
 
   const handleStartDateChange = (newValue) => {
-    console.log("newvalue:", newValue);
     if (newValue > endDate || !scope || !newValue.isValid()) {
       setErrors((prevState) => ({
         ...prevState,
@@ -130,7 +129,10 @@ export const DataDisplay = () => {
 
   const handleGraphChange = (event) => {
     const value = event.target.value;
-    if (value.length === 0) {
+    if (
+      value.length === 0 ||
+      (value[value.length - 1] === "all" && graphs.length === graphList.length)
+    ) {
       setErrors((prevState) => ({
         ...prevState,
         graphs: { error: true, text: "Select a graph" },
@@ -166,7 +168,10 @@ export const DataDisplay = () => {
 
   const handleIPChange = (event) => {
     const value = event.target.value;
-    if (value.length === 0) {
+    if (
+      value.length === 0 ||
+      (value[value.length - 1] === "all" && ips.length === ipsList.length)
+    ) {
       setErrors((prevState) => ({
         ...prevState,
         ips: { error: true, text: "Select an IP" },
@@ -187,7 +192,11 @@ export const DataDisplay = () => {
 
   const handleSensorChange = (event) => {
     const value = event.target.value;
-    if (value.length === 0) {
+    if (
+      value.length === 0 ||
+      (value[value.length - 1] === "all" &&
+        sensors.length === sensorList.length)
+    ) {
       setErrors((prevState) => ({
         ...prevState,
         sensors: { error: true, text: "Select a sensor" },
@@ -243,8 +252,6 @@ export const DataDisplay = () => {
   };
 
   useEffect(() => {
-    console.log(errors);
-    console.log(entries);
     valid = !(
       ips.length === 0 ||
       graphs.length === 0 ||
@@ -255,24 +262,10 @@ export const DataDisplay = () => {
       (scope == "Custom" &&
         (startDate > endDate || !startDate.isValid() || !endDate.isValid()))
     );
-
-    // setValid(
-    //   !(
-    //     ips.length === 0 ||
-    //     graphs.length === 0 ||
-    //     sensors.length === 0 ||
-    //     entries == 0 ||
-    //     scope === null ||
-    //     scope === "" ||
-    //     (scope == "Custom" &&
-    //       (startDate > endDate || !startDate.isValid() || !endDate.isValid()))
-    //   )
-    // );
-
-    console.log("valid selection?", valid);
   });
 
   useEffect(() => {
+    console.log("collecting status data");
     const getData = async () => {
       try {
         var tempIpsList = [];
@@ -288,7 +281,6 @@ export const DataDisplay = () => {
 
         // sensor query
         const sensorsReq = await axios.get("/sensors");
-        console.log(sensorsReq);
         setSensorList(sensorsReq.data);
       } catch (err) {
         setStatusData([]);

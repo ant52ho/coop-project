@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Box } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { interpolateColors } from "../scripts/generateColour";
 import { interpolateRainbow } from "d3-scale-chromatic";
 import moment from "moment";
@@ -30,25 +30,32 @@ function toSeconds(scope, startDate, endDate) {
     unit = unit.slice(0, unit.length - 1);
   }
 
-  var end;
+  var end = date;
   var start = date;
+  var format = "Y/M/D";
 
   if (unit === "minute") {
-    end = start + duration * 60;
+    start = end - duration * 60;
+    format = "MMM D, h:mma;k:mm";
   } else if (unit === "hour") {
-    end = start + duration * 60 * 60;
+    start = end - duration * 60 * 60;
+    format = "MMM D, h:mma;M/D k:mm";
   } else if (unit === "day") {
-    end = start + duration * 60 * 60 * 24;
+    start = end - duration * 60 * 60 * 24;
+    format = "MMM D, h:mma;M/D kk:mm";
   } else if (unit === "week") {
-    end = start + duration * 60 * 60 * 24 * 7;
+    start = end - duration * 60 * 60 * 24 * 7;
+    format = "MMMM D;M/D";
   } else if (unit === "month") {
-    end = start + duration * 60 * 60 * 24 * 30;
+    start = end - duration * 60 * 60 * 24 * 30;
+    format = "MMM D, YYYY;M/D";
   } else if (unit === "Custom") {
     start = startDate;
     end = endDate;
+    format = "Y/M/D";
   }
 
-  return [start, end];
+  return { start: start, end: end, format: format };
 }
 
 export const PlotLine = (props) => {
@@ -84,9 +91,14 @@ export const PlotLine = (props) => {
     [
       "ips:" + ips.join(),
       "sensor:" + sensor,
-      "scope:" + scope[0] + "," + scope[1],
+      "scope:" + scope.start + "," + scope.end,
       "entries:" + entries,
     ].join("/");
+
+  const formatLong = scope.format.split(";")[0];
+  const formatShort = scope.format.split(";")[1];
+  startDate = scope.start;
+  endDate = scope.end;
 
   console.log(retval);
 
@@ -100,14 +112,6 @@ export const PlotLine = (props) => {
     interpolateRainbow,
     colorRangeInfo
   );
-
-  console.log("ips:", ips);
-
-  const t1 = 1390601996;
-  const t2 = 1391835599;
-
-  console.log(moment(t1));
-  console.log(moment(t2));
 
   // A one time useEffect render
   useEffect(() => {
@@ -128,51 +132,55 @@ export const PlotLine = (props) => {
   }, [toggle]);
   return (
     <div>
-      {props.sensor}
-      {props.cmd.ips}
-      {props.cmd.scope}
-      <Box sx={{ width: 600, height: 300 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart
-            width={500}
-            height={400}
-            margin={{
-              top: 20,
-              right: 20,
-              bottom: 20,
-              left: 20,
-            }}
-          >
-            <CartesianGrid />
-            <XAxis
-              type="number"
-              dataKey="timestamp"
-              name="stature"
-              domain={["dataMin", "dataMax"]}
-              unit=""
-              tickCount="10"
-              tickFormatter={(unixTime) =>
-                moment(unixTime * 1000).format("M/D")
-              }
-              // tickFormatter={(val) => val}
-            />
-            <YAxis type="number" dataKey="value" name="weight" unit="unit" />
-            <ZAxis type="number" range={[100]} />
-            <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-            <Legend />
-            {backendData.map((node, i) => (
-              <Scatter
-                key={i}
-                name={node.sensor}
-                data={node.data}
-                fill={colours[i]}
-                line
-                shape="circle"
+      <Stack display={"flex"} alignItems={"center"}>
+        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+          Line graph for: {props.sensor} from{" "}
+          {moment(startDate * 1000).format(formatLong)} to{" "}
+          {moment(endDate * 1000).format(formatLong)}
+        </Typography>
+        <Box sx={{ width: 600, height: 300 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart
+              width={500}
+              height={400}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid />
+              <XAxis
+                type="number"
+                dataKey="timestamp"
+                name="stature"
+                domain={["dataMin", "dataMax"]}
+                unit=""
+                tickCount="10"
+                tickFormatter={(unixTime) =>
+                  moment(unixTime * 1000).format(formatShort)
+                }
+                // tickFormatter={(val) => val}
               />
-            ))}
-          </ScatterChart>
-        </ResponsiveContainer>
-      </Box>
+              <YAxis type="number" dataKey="value" name="weight" unit="unit" />
+              <ZAxis type="number" range={[100]} />
+              <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+              <Legend />
+              {backendData.map((node, i) => (
+                <Scatter
+                  key={i}
+                  name={node.sensor}
+                  data={node.data}
+                  fill={colours[i]}
+                  line
+                  shape="circle"
+                />
+              ))}
+            </ScatterChart>
+          </ResponsiveContainer>
+        </Box>
+      </Stack>
     </div>
   );
 };

@@ -70,20 +70,15 @@ export const DataDisplay = () => {
     entries: entries,
   });
   const [toggle, setToggle] = useState(false);
+
   const [errors, setErrors] = useState({
-    graphs: { error: false, text: "Select a graph" },
-    ips: { error: false, text: "Select an IP" },
-    sensors: { error: false, text: "Select a sensor" },
-    scope: { error: false, text: "Select a time" },
-    entries: { error: false, text: "Select a non-zero value" },
-    startDate: {
-      error: false,
-      text: "error",
-    },
-    endDate: {
-      error: false,
-      text: "error",
-    },
+    graphs: { error: false, text: "" },
+    ips: { error: false, text: "" },
+    sensors: { error: false, text: "" },
+    scope: { error: false, text: "" },
+    entries: { error: false, text: "" },
+    startDate: { error: false, text: "" },
+    endDate: { error: false, text: "" },
   });
   const [statusData, setStatusData] = useState([]);
   const [ipsList, setIpsList] = useState([]);
@@ -104,14 +99,48 @@ export const DataDisplay = () => {
   }
 
   const handleStartDateChange = (newValue) => {
+    console.log("newvalue:", newValue);
+    if (newValue > endDate || !scope || !newValue.isValid()) {
+      setErrors((prevState) => ({
+        ...prevState,
+        startDate: { error: true, text: "Select a valid time" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        startDate: { error: false, text: "" },
+      }));
+    }
     setStartDate(newValue);
   };
   const handleEndDateChange = (newValue) => {
+    if (startDate > newValue || !scope || !newValue.isValid()) {
+      setErrors((prevState) => ({
+        ...prevState,
+        endDate: { error: true, text: "Select a valid time" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        endDate: { error: false, text: "" },
+      }));
+    }
     setEndDate(newValue);
   };
 
   const handleGraphChange = (event) => {
     const value = event.target.value;
+    if (value.length === 0) {
+      setErrors((prevState) => ({
+        ...prevState,
+        graphs: { error: true, text: "Select a graph" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        graphs: { error: false, text: "" },
+      }));
+    }
     if (value[value.length - 1] === "all") {
       setGraphs(graphs.length === graphList.length ? [] : graphList);
       return;
@@ -121,11 +150,34 @@ export const DataDisplay = () => {
 
   const handleEntriesChange = (event) => {
     const value = event.target.value;
+    if (value === null || value == 0) {
+      setErrors((prevState) => ({
+        ...prevState,
+        entries: { error: true, text: "Enter a non-zero number" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        entries: { error: false, text: "" },
+      }));
+    }
     setEntries(value);
   };
 
   const handleIPChange = (event) => {
     const value = event.target.value;
+    if (value.length === 0) {
+      setErrors((prevState) => ({
+        ...prevState,
+        ips: { error: true, text: "Select an IP" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        ips: { error: false, text: "" },
+      }));
+    }
+
     if (value[value.length - 1] === "all") {
       setIps(ips.length === ipsList.length ? [] : ipsList);
       return;
@@ -135,6 +187,18 @@ export const DataDisplay = () => {
 
   const handleSensorChange = (event) => {
     const value = event.target.value;
+    if (value.length === 0) {
+      setErrors((prevState) => ({
+        ...prevState,
+        sensors: { error: true, text: "Select a sensor" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        sensors: { error: false, text: "" },
+      }));
+    }
+
     if (value[value.length - 1] === "all") {
       setSensors(sensors.length === sensorList.length ? [] : sensorList);
       return;
@@ -143,6 +207,17 @@ export const DataDisplay = () => {
   };
 
   const handleScopeChange = (event, newValue) => {
+    if (newValue === null || newValue === "") {
+      setErrors((prevState) => ({
+        ...prevState,
+        scope: { error: true, text: "Select a time" },
+      }));
+    } else {
+      setErrors((prevState) => ({
+        ...prevState,
+        scope: { error: false, text: "" },
+      }));
+    }
     setScope(newValue);
   };
 
@@ -168,6 +243,7 @@ export const DataDisplay = () => {
   };
 
   useEffect(() => {
+    console.log(errors);
     console.log(entries);
     valid = !(
       ips.length === 0 ||
@@ -226,7 +302,8 @@ export const DataDisplay = () => {
       <Stack direction="row" spacing={3} display={"border-box"}>
         <MultiSelect
           label="Graphs"
-          error={graphs.length === 0}
+          error={errors.graphs.error}
+          helperText={errors.graphs.text}
           options={graphList}
           value={graphs}
           handleChange={handleGraphChange}
@@ -235,7 +312,8 @@ export const DataDisplay = () => {
           id="entries"
           sx={{ width: 200 }}
           defaultValue={1000}
-          error={entries == 0}
+          error={errors.entries.error}
+          helperText={errors.entries.text}
           label="Max. Entries per Node"
           type="number"
           InputLabelProps={{
@@ -249,14 +327,16 @@ export const DataDisplay = () => {
           label="IPs"
           options={ipsList}
           value={ips}
-          error={ips.length === 0}
+          error={errors.ips.error}
+          helperText={errors.ips.text}
           handleChange={handleIPChange}
         />
         <MultiSelect
           label="Sensors"
           options={sensorList}
           value={sensors}
-          error={sensors.length === 0}
+          error={errors.sensors.error}
+          helperText={errors.sensors.text}
           handleChange={handleSensorChange}
         />
 
@@ -268,7 +348,8 @@ export const DataDisplay = () => {
             <TextField
               {...params}
               label="Time"
-              error={scope === "" || scope === null}
+              error={errors.scope.error}
+              helperText={errors.scope.text}
             />
           )}
           freeSolo={false}
@@ -286,7 +367,8 @@ export const DataDisplay = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  error={startDate > endDate || !scope || !startDate.isValid()}
+                  error={errors.startDate.error}
+                  helperText={errors.startDate.text}
                 />
               )}
             />
@@ -297,15 +379,13 @@ export const DataDisplay = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  error={startDate > endDate || !scope || !endDate.isValid()}
+                  error={errors.endDate.error}
+                  helperText={errors.endDate.text}
                 />
               )}
             />
           </LocalizationProvider>
         </Stack>
-      )}
-      {startDate > endDate && scope === "Custom" && (
-        <Typography color="error"> Please enter a valid time </Typography>
       )}
 
       <Stack direction="row" spacing={3}>

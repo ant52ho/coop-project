@@ -4,7 +4,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Select from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
 import { useState } from "react";
-import { OutlinedInput, InputLabel } from "@mui/material";
+import { OutlinedInput, InputLabel, FormHelperText } from "@mui/material";
 
 const options = [
   "10.0.0.1",
@@ -24,13 +24,13 @@ export const MultiSelect = (props) => {
   const selected = props.value;
   const label = props.label;
   const error = props.error;
+  const helperText = props.helperText;
 
   return (
     <div>
-      <FormControl sx={{ width: 200 }}>
+      <FormControl sx={{ width: 200 }} error={error}>
         <InputLabel id={label + "labelID"}>{label}</InputLabel>
         <Select
-          error={error}
           labelId="{label + 'labelID'}"
           input={<OutlinedInput label={label} />}
           multiple
@@ -55,6 +55,7 @@ export const MultiSelect = (props) => {
             </MenuItem>
           ))}
         </Select>
+        <FormHelperText>{helperText}</FormHelperText>
       </FormControl>
     </div>
   );

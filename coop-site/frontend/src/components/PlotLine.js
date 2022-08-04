@@ -131,18 +131,19 @@ export const PlotLine = (props) => {
     getData();
   }, [toggle]);
   return (
-    <div>
+    <Box display={"inline-block"}>
+      {/* <Stack> */}
       <Stack display={"flex"} alignItems={"center"}>
         <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
           Line graph for: {props.sensor} from{" "}
           {moment(startDate * 1000).format(formatLong)} to{" "}
           {moment(endDate * 1000).format(formatLong)}
         </Typography>
-        <Box sx={{ width: 600, height: 300 }}>
+        <Box sx={{ width: 750, height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart
-              width={500}
-              height={400}
+              width={"100%"}
+              height={"100%"}
               margin={{
                 top: 20,
                 right: 20,
@@ -181,7 +182,7 @@ export const PlotLine = (props) => {
           </ResponsiveContainer>
         </Box>
       </Stack>
-    </div>
+    </Box>
   );
 };
 

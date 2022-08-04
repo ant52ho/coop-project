@@ -1,5 +1,6 @@
 import React from "react";
 import { PlotLine } from "./PlotLine";
+import { Stack, Divider } from "@mui/material";
 // const cmd = {
 //     graphs: graphs,
 //     ips: ips,
@@ -17,20 +18,19 @@ export const OutputGraphs = (props) => {
       {cmd.graphs.map((graph, i) => (
         <div key={i}>
           {graph === "Line" ? (
-            <div>
-              This is a line
+            <Stack spacing={3}>
               {cmd.sensors.map((sensor, i) => (
                 <div key={i}>
-                  {sensor}
                   <PlotLine
                     graph={graph}
                     sensor={sensor}
                     cmd={cmd}
                     toggle={toggle}
                   />
+                  <Divider />
                 </div>
               ))}
-            </div>
+            </Stack>
           ) : null}
           {graph === "Graph 1" ? <div>This is Graph 1</div> : null}
           {graph === "Graph 2" ? <div>This is not Graph 2</div> : null}

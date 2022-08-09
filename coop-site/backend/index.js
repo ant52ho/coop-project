@@ -121,13 +121,13 @@ app.get("*", async (req, res) => {
     const entries = query[3].split(":")[1];
     var startTime = scope[0];
     var endTime = scope[1];
-
-    if (endTime > moment().unix()) {
-      if (startTime > moment().unix()) {
-        startTime = moment().unix();
-      }
-      endTime = moment().unix();
-    }
+    `
+    // if (endTime > moment().unix()) {
+    //   if (startTime > moment().unix()) {
+    //     startTime = moment().unix();
+    //   }
+    //   endTime = moment().unix();
+    // }`;
 
     console.log(ips);
     console.log(sensor);

@@ -87,22 +87,22 @@ export const PlotLine = (props) => {
     sensor = dict[sensor];
   }
 
-  scope = toSeconds(scope, startDate, endDate);
+  var scopeDetails = toSeconds(scope, startDate, endDate);
   var retval =
     "/" +
     [
       "ips:" + ips.join(),
       "sensor:" + sensor,
-      "scope:" + scope.start + "," + scope.end,
+      "scope:" + scopeDetails.start + "," + scopeDetails.end,
       "entries:" + entries,
     ].join("/");
 
   // console.log(retval);
 
-  const formatLong = scope.format.split(";")[0];
-  const formatShort = scope.format.split(";")[1];
-  startDate = scope.start;
-  endDate = scope.end;
+  const formatLong = scopeDetails.format.split(";")[0];
+  const formatShort = scopeDetails.format.split(";")[1];
+  startDate = scopeDetails.start;
+  endDate = scopeDetails.end;
   const colorRangeInfo = {
     colorStart: 0,
     colorEnd: 1,
@@ -136,11 +136,17 @@ export const PlotLine = (props) => {
     <Box display={"inline-block"}>
       {/* <Stack> */}
       <Stack display={"flex"} alignItems={"center"}>
-        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-          Line graph for: {props.sensor} from{" "}
-          {moment(startDate * 1000).format(formatLong)} to{" "}
-          {moment(endDate * 1000).format(formatLong)}
-        </Typography>
+        {scope === "All" ? (
+          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+            Line graph for all available points
+          </Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+            Line graph for: {props.sensor} from{" "}
+            {moment(startDate * 1000).format(formatLong)} to{" "}
+            {moment(endDate * 1000).format(formatLong)}
+          </Typography>
+        )}
         <Box sx={{ width: 750, height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart

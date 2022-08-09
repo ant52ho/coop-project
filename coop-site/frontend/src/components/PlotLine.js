@@ -25,7 +25,7 @@ function toSeconds(scope, startDate, endDate) {
   var duration = scope[0];
 
   if (!unit) {
-    unit = "Custom";
+    unit = scope[0];
   } else if (unit[unit.length - 1] === "s") {
     unit = unit.slice(0, unit.length - 1);
   }
@@ -49,6 +49,8 @@ function toSeconds(scope, startDate, endDate) {
   } else if (unit === "month") {
     start = end - duration * 60 * 60 * 24 * 30;
     format = "MMM D, YYYY;M/D";
+  } else if (unit === "All") {
+    format = "MMMM D;M/D";
   } else if (unit === "Custom") {
     start = startDate / 1000;
     end = endDate / 1000;

@@ -1,3 +1,4 @@
+const moment = require("moment");
 const express = require("express");
 const app = express();
 const port = 5000;
@@ -118,8 +119,15 @@ app.get("*", async (req, res) => {
     const sensor = query[1].split(":")[1];
     const scope = query[2].split(":")[1].split(",");
     const entries = query[3].split(":")[1];
-    const startTime = scope[0];
-    const endTime = scope[1];
+    var startTime = scope[0];
+    var endTime = scope[1];
+
+    if (endTime > moment().unix()) {
+      if (startTime > moment().unix()) {
+        startTime = moment().unix();
+      }
+      endTime = moment().unix();
+    }
 
     console.log(ips);
     console.log(sensor);
@@ -133,11 +141,17 @@ app.get("*", async (req, res) => {
     for (let sensorIndex = 0; sensorIndex < ips.length; sensorIndex++) {
       const sensorNumber = ips[sensorIndex];
       const cmd = ips[sensorIndex] + ":" + sensor;
-      console.log(cmd);
+      console.log("cmd:", cmd);
 
       // the key may or may not exist, use try
       try {
-        const bucket = Math.round((endTime - startTime) / entries);
+        var bucket = Math.round((endTime - startTime) / entries);
+
+        if (startTime === endTime) {
+          startTime = "-";
+          endTime = "+";
+          bucket = 1000;
+        }
 
         value = await redisClient.ts.range(cmd, startTime, endTime, {
           // value = await redisClient.ts.range(cmd, "-", "+", {
@@ -149,9 +163,13 @@ app.get("*", async (req, res) => {
             timeBucket: bucket,
           },
         });
+        console.log("value:", value);
       } catch (e) {
+        console.log(e);
         value = [];
       }
+
+      console.log(value);
 
       data.push({ sensor: sensorNumber, data: value });
     }

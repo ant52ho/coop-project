@@ -6,6 +6,10 @@ import os
 
 # sudo pip3 install redis
 
+
+# curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+# echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+# sudo apt-get update
 # sudo apt-get install redis
 
 # sudo apt-get install sqlite3
@@ -58,4 +62,35 @@ CREATE INDEX case_insensitive_macs ON maps (mac COLLATE NOCASE);
 # bring over redisTest.conf
 
 # clone redistimeseries, redisjson
-# download rust
+# download rust ( it's for redisjson, but we likely won't need it )
+
+
+'''
+Setup for client
+'''
+
+# sudo apt update
+# sudo apt upgrade
+# sudo apt install python3-pip
+# sudo pip3 install redis
+# sudo apt-get install bridge-utils
+
+'''
+Setup for cloud server
+'''
+
+# move cloudScript and cloudConf into ec2
+# sudo apt update
+# sudo apt upgrade
+# sudo apt install python3-pip
+
+# curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+# echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+# sudo apt-get update
+# sudo apt-get install redis
+# git clone --recursive https://github.com/RedisTimeSeries/RedisTimeSeries.git
+# cd RedisTimeSeries
+# make setup
+# make build
+
+# go into ec2 instance and open port 5050 for socket connection

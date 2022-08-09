@@ -139,8 +139,8 @@ app.get("*", async (req, res) => {
       try {
         const bucket = Math.round((endTime - startTime) / entries);
 
-        // value = await redisClient.ts.range(cmd, startTime, endTime, {
-        value = await redisClient.ts.range(cmd, "-", "+", {
+        value = await redisClient.ts.range(cmd, startTime, endTime, {
+          // value = await redisClient.ts.range(cmd, "-", "+", {
           COUNT: entries,
           // Group into 1 second averages.
           AGGREGATION: {

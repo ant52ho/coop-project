@@ -50,9 +50,9 @@ function toSeconds(scope, startDate, endDate) {
     start = end - duration * 60 * 60 * 24 * 30;
     format = "MMM D, YYYY;M/D";
   } else if (unit === "Custom") {
-    start = startDate;
-    end = endDate;
-    format = "Y/M/D";
+    start = startDate / 1000;
+    end = endDate / 1000;
+    format = "Y/M/D;M/D";
   }
 
   return { start: start, end: end, format: format };
@@ -94,6 +94,8 @@ export const PlotLine = (props) => {
       "scope:" + scope.start + "," + scope.end,
       "entries:" + entries,
     ].join("/");
+
+  // console.log(retval);
 
   const formatLong = scope.format.split(";")[0];
   const formatShort = scope.format.split(";")[1];

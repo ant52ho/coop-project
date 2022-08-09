@@ -292,6 +292,7 @@ if __name__ == "__main__":
     r = redis.Redis(host='10.0.0.1', port=6379,
                     password='rat', decode_responses=True)
 
+    # this line also sends data
     edgeThread = threading.Thread(target=maintainEdgeClient)
     edgeThread.start()
 

@@ -93,4 +93,6 @@ Setup for cloud server
 # make setup
 # make build
 
+# sudo pip3 install redis --upgrade (because in ubuntu the live redis vesion is 3.5.(something))
+
 # go into ec2 instance and open port 5050 for socket connection

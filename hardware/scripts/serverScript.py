@@ -302,7 +302,7 @@ def maintainCloudClient():
             global cloudClientGlobal
             cloudClientGlobal = cloudClient
             startCloudClient(cloudClient)
-        except ConnectionRefusedError:
+        except ConnectionRefusedError or OSError:
             time.sleep(3)
             print('not connected to cloud server, retrying...')
         print('loop')

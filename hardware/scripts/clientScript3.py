@@ -235,7 +235,7 @@ def maintainEdgeClient():
             startEdgeClient(edgeClient)
         except ConnectionRefusedError:
             time.sleep(3)
-        print('loop')
+        print('unable to connect to edge socket')
 
 
 # this program mimicks sending data

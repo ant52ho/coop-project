@@ -12,36 +12,35 @@ if len(bindings.split(' ')) != 3:
 
 
 '''
-import os
+
 import socket
-import struct
-import fcntl
+
+print("start")
+
+# common constants
+HEADER = 128
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
 
 
-def get_ip_linux(interface: str) -> str:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    packed_iface = struct.pack('256s', interface.encode('utf_8'))
+def send(msg, cloudClient):
     try:
-        packed_addr = fcntl.ioctl(sock.fileno(), 0x8915, packed_iface)[20:24]
-    except OSError:
-        print("triggered os error")
-        return "error"
-    return socket.inet_ntoa(packed_addr)
+        message = msg.encode(FORMAT)
+        cloudClient.send(message)
+        print(cloudClient.recv(HEADER).decode(FORMAT))
+        return True
+    except AttributeError:  # cloud client isn't connected
+        return False
 
 
-def startIBSS(ip="", channel=4, essid='AHTest'):
-    print('starting ibss!')
-    if ip == "":
-        ip_twin = get_ip_linux("eth0")
-        ip = ip_twin[:5] + "1" + ip_twin[6:]
-    os.system('sudo ifconfig wlan0 up')
-    # os.system('sudo iwconfig wlan0 channel ' + str(channel)) # impossible on some pis
-    #os.system('sudo iwconfig wlan0 mode ad-hoc')
-    #os.system("sudo iwconfig wlan0 essid '" + essid + "'")
-    os.system('sudo ifconfig wlan0 ' + ip)
-    #os.system('sudo ip addr flush dev wlan0')
-    os.system('sudo ip route add 10.0.1.0/24 via ' + ip)
-    return True
+# Cloud constants
+CLOUD_PORT = 5050  # this port will have to change for edge server
+CLOUD_SERVER = "18.219.10.248"
+CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
 
+cloudClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+cloudClient.connect(CLOUD_ADDR)
 
-startIBSS()
+print("[STARTING] Cloud client is starting...")
+
+send('hello world', cloudClient)

@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     # initiates the redis server
     redis_thread = threading.Thread(
-        target=restartRedis, args=("/home/antho/coop-project/coop-site/frontend/src/redisTemp.conf",))
+        target=restartRedis, args=("/home/ubuntu/redisCloud.conf",))
     redis_thread.start()
     time.sleep(3)
 

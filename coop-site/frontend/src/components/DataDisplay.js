@@ -36,10 +36,10 @@ export const DataDisplay = () => {
     "60 minutes",
     "3 hours",
     "12 hours",
-    "24 hours",
     "3 days",
     "1 week",
     "1 month",
+    "All",
     "Custom",
     "",
   ];

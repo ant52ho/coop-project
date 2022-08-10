@@ -5,7 +5,6 @@
 import redis
 import time
 import datetime
-import redis
 import os
 import threading
 

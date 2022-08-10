@@ -54,7 +54,6 @@ export const MuiTable = () => {
     };
     getData();
 
-    getData();
     const interval = setInterval(() => {
       getData();
     }, 10000);

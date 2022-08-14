@@ -1,14 +1,14 @@
+from createConfs import *
 import time
 import os.path
 from os import path
 import socket
-import fcntl
-import struct
 import subprocess
 import os
 import redis
 import threading
 
+from createConfs import *
 
 # common constants
 HEADER = 128
@@ -34,17 +34,20 @@ def get_ip(iface: str) -> str:
 
 
 def get_id() -> int:
-    ip = get_ip('br0')
-    if ip[:2] == "10":
-        id = ip[7:]
-        print(id)
-        return int(id)
+    if ifExists('br0'):
+        ip = get_ip('br0')
+        if ip[:2] == "10":
+            id = ip[7:]
+            print(id)
+            return int(id)
 
     ip = get_ip('eth0')  # ie 10.0.0.3
     if ip[:2] == "10":
         id = ip[7:]
         print(id)
         return int(id)
+
+    return -1
 
 
 def package_installed(pck):  # need to test if it works
@@ -83,7 +86,7 @@ def connectDHCP():
     print("attempting to connect to dhcp")
     os.system('sudo ifconfig eth0 0.0.0.0')
     # this connects the raspi to the DHCP server
-    os.system('sudo dhclient eth0 -v')
+    os.system('sudo dhclient eth0 -p 1112 -v')
     ipaddr = get_ip("eth0")
     print("current ip addr: ", ipaddr)
     if (ipaddr[:6] == "10.0.0"):
@@ -133,11 +136,7 @@ def isIfConnected(ifname):
 
 
 def getEdge(r):
-    if STATICLAST:
-        return STATICLAST
-
-    retval = False
-
+    retval = None
     try:
         retval = r.ping()
     except Exception as e:
@@ -165,6 +164,18 @@ def isConnected(ip):
     else:
         print(ip + " is down!")
         return False
+
+
+def startAP():
+    os.system("sudo service hostapd start")
+    os.system("sudo service dnsmasq start")
+    return True
+
+
+def stopAP():
+    os.system("sudo service hostapd stop")
+    os.system("sudo service dnsmasq stop")
+    return True
 
 # startIBSS starts the IBSS server
 
@@ -198,10 +209,35 @@ def isAdHoc():
     return True
 
 
+def isAP():
+    wlanMode = str(subprocess.check_output(['iwconfig', 'wlan1']))
+    wlanState = str(subprocess.check_output(['ifconfig', 'wlan1']))
+    # print(retval)
+    try:
+        wlanMode.index("APTest")
+        wlanState.index("RUNNING")
+    except ValueError:
+        return False
+    return True
+
+
 def send(msg, edgeClient):
     message = msg.encode(FORMAT)
     edgeClient.send(message)
     print(edgeClient.recv(HEADER).decode(FORMAT))
+
+
+def updateStatus(edgeClient):
+    while True:
+        id = get_id()
+        if id != -1:
+            isNeighbourConnected = isConnected('10.0.0.' + str(id - 1))
+            print('f:sensor' + str(id) + 'ethConnected:' +
+                  str(isNeighbourConnected))
+            send('f:sensor' + str(id) + 'ethConnected:' +
+                 str(isNeighbourConnected), edgeClient)
+
+        time.sleep(3)
 
 
 def startEdgeClient(edgeClient):
@@ -209,7 +245,24 @@ def startEdgeClient(edgeClient):
 
     send('hello world', edgeClient)
 
-    sendData(10, edgeClient, all=True)
+    # clientThread = threading.Thread(target=updateStatus, args=(edgeClient, ))
+    # clientThread.start()
+
+    while True:
+        try:
+            id = get_id()
+            if id != -1:
+                isNeighbourConnected = isConnected('10.0.0.' + str(id - 1))
+                print('f:sensor' + str(id) + 'ethConnected:' +
+                      str(isNeighbourConnected))
+                send('f:sensor' + str(id) + 'ethConnected:' +
+                     str(isNeighbourConnected), edgeClient)
+                sendData(10, edgeClient, all=True)
+            else:
+                time.sleep(3)
+        except Exception as e:
+            print(e)
+            time.sleep(3)
 
     # while True:
     #     try:
@@ -233,9 +286,9 @@ def maintainEdgeClient():
             edgeClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             edgeClient.connect(EDGE_ADDR)
             startEdgeClient(edgeClient)
-        except ConnectionRefusedError:
+        except Exception as e:
+            print('unable to connect to edge socket, error', e)
             time.sleep(3)
-        print('unable to connect to edge socket')
 
 
 # this program mimicks sending data
@@ -296,6 +349,8 @@ if __name__ == "__main__":
     edgeThread = threading.Thread(target=maintainEdgeClient)
     edgeThread.start()
 
+    # stopAP()
+
     while True:
         eth0Exists = ifExists("eth0")
         eth1Exists = ifExists("eth1")
@@ -310,11 +365,24 @@ if __name__ == "__main__":
         # a simple check if it has the right IP
         dhcpConnected = isDHCPConnected("eth0")
 
+        # note: this block triggers ~1x. This is b/c dhcpConnected is a basic
+        #   ip check for "10.0.0.x" on eth0
         if (eth0Exists and dhcpConnected == False):
 
             # make a dhcp connection if eth0 is connected
             if isIfConnected("eth0"):
                 dhcpConnected = connectDHCP()
+
+            # creates a dhcpcd file, a dnsmasq.conf file, hostapd.conf file
+            if dhcpConnected:
+                id = get_id()
+
+                if id != -1:
+                    # these four conf files are necessary
+                    createDhcpcdConf(id)
+                    createDnsmasqConf(id)
+                    createHostapdConf(id)
+                    createWpaSupplicantConf(id)
 
         print(dhcpConnected, eth0Exists, eth1Exists, createBridge)
 
@@ -339,25 +407,45 @@ if __name__ == "__main__":
             ethConnected = isConnected('10.0.0.1') and isConnected(getEdge(r))
 
             # if eth edges cannot be pinged
+            '''
+Every single node pings their left neighbour ie 2->1, 3->2, … If they can ping it, then the disconnect is not with them. 
+Raise all APs, raise all clients, connect all clients to correct AP by specifying in wpa_supplicant-client.conf. 
+Send a message via socket to 10.0.0.1 mentioning whether id = disconnect. This repeats every 3 seconds. The server replies whether all nodes are connected or not (for website) 
+If all are connected, then lower AP and C. 
+'''
             if not ethConnected:
+                if not isAP():
+                    print("starting AP/C!")
+                    #retval = startAP()
+                    #os.system("sudo ip route del 10.0.0.0/24")
 
                 # if ad-hoc is currently off
-                if not isAdHoc():
-                    print("raising ibss!")
-                    retval = startIBSS(ip="", channel=4, essid='AHTest')
+                # if not isAdHoc():
+                #     print("raising ibss!")
+                #     retval = startIBSS(ip="", channel=4, essid='AHTest')
 
                 # reset possible counter
                 timerStart = 0
 
             if ethConnected:
                 # if adhoc is on but ethernet connections are detected
-                if isAdHoc():
-                    # the program will wait for 5 seconds before disabling IBSS mode
+                # if isAdHoc():
+                #     # the program will wait for 5 seconds before disabling IBSS mode
+                #     if timerStart == 0:
+                #         timerStart = time.time()
+                #     if time.time() > timerStart + 5 and timerStart != 0:
+                #         os.system('sudo ifconfig wlan0 down')
+                #         print("lower ibss!")
+                #         timerStart = 0
+                if isAP():
                     if timerStart == 0:
                         timerStart = time.time()
                     if time.time() > timerStart + 5 and timerStart != 0:
-                        os.system('sudo ifconfig wlan0 down')
-                        print("lower ibss!")
+                        # stopAP()
+                        print("stopping AP!")
+                        #id = get_id()
+                        # os.system(
+                        #    "sudo ip route add 10.0.0.0/24 via 10.0.0." + str(id))
                         timerStart = 0
 
         time.sleep(3)

@@ -122,6 +122,30 @@ def get_ip_linux(interface: str) -> str:
         return "error"
     return socket.inet_ntoa(packed_addr)
 
+
+def isAP():
+    wlanMode = str(subprocess.check_output(['iwconfig', 'wlan1']))
+    wlanState = str(subprocess.check_output(['ifconfig', 'wlan1']))
+    # print(retval)
+    try:
+        wlanMode.index("APTest")
+        wlanState.index("RUNNING")
+    except ValueError:
+        return False
+    return True
+
+
+def startAP():
+    os.system("sudo service hostapd start")
+    os.system("sudo service dnsmasq start")
+    return True
+
+
+def stopAP():
+    os.system("sudo service hostapd stop")
+    os.system("sudo service dnsmasq stop")
+    return True
+
 # checks if current device is in ad-hoc mode
 
 
@@ -188,13 +212,11 @@ def resetRedisKeys():
 
 def recv(conn, addr):
     msg = conn.recv(HEADER).decode(FORMAT)
+    if not msg:
+        return
     print(f"[{addr}] {msg}")
     conn.send("Msg received".encode(FORMAT))
     return msg
-
-
-def reply_ip(conn):
-    conn.send("10.0.0.1".encode(FORMAT))
 
 
 def forward(msg, cloudClient):
@@ -220,11 +242,11 @@ def handle_client(conn, addr, redisConnection):
     while True:
         msg = recv(conn, addr)
 
-        if msg == DISCONNECT_MESSAGE:
+        if not msg:
             break
 
-        elif msg == 'get_ip':
-            ip = reply_ip(conn)
+        if msg == DISCONNECT_MESSAGE:
+            break
 
         elif len(msg) >= 2 and msg[:2] == 'f:':
             retval = forward(msg, cloudClientGlobal)
@@ -352,7 +374,7 @@ if __name__ == "__main__":
         deleteTableRecords(sqliteConnection)
 
     # timer variable for IBSS
-    endIBSSTimer = 0
+    endAPTimer = 0
 
     # initiates the dhcp server
     # the dhcp server will update the redis server as updates are made
@@ -368,42 +390,24 @@ if __name__ == "__main__":
     r.config_set('bind', '127.0.0.1 10.0.0.1 -::1')
 
     while True:  # this will become a while loop in the future
-
         ethConnected = isConnected(lastNode(sqliteConnection))
+        print("ethAllConnected", ethConnected)
+        print("loop")
+        r.set("ethAllConnected", str(ethConnected))
 
-        if not ethConnected:
+        if not ethConnected and not isAP():
             # reset end ibss timer
-            endIBSSTimer = 0
+            endAPTimer = 0
+            print("starting AP!")
+            startAP()
 
-            # retval should be used to determine the disconnected node
-            retval = scanNodes(sqliteConnection)
-
-            # server raises IBSS based existing ethernet ip
-            if not isAdHoc():
-                startIBSS(ip="10.0.1.1", channel=4, essid='AHTest')
-
-            # create redis bindings, requires ips to exist
-            cmd = r.config_get("bind")
-            bindings = cmd['bind']
-            if len(bindings.split(' ')) == 3:
-                cmd = r.config_set('bind', '127.0.0.1 10.0.0.1 10.0.1.1 -::1')
-
-        if ethConnected:
-            # disables IBSS if necessary after waiting for 5 seconds
-            if isAdHoc():
-                if endIBSSTimer == 0:
-                    endIBSSTimer = time.time()
-                if time.time() > endIBSSTimer + 5 and endIBSSTimer != 0:
-                    print("lower ibss!")
-                    os.system('sudo ifdown wlan0')
-
-                    # checks if the right bindings are on redis
-                    cmd = r.config_get("bind")
-                    bindings = cmd['bind']
-                    if len(bindings.split(' ')) != 3:
-                        cmd = r.config_set('bind', '127.0.0.1 10.0.0.1 -::1')
-
-                    endIBSSTimer = 0
+        if ethConnected and isAP():
+            if endAPTimer == 0:
+                endAPTimer = time.time()
+            if time.time() > endAPTimer + 5 and endAPTimer != 0:
+                print("stopping AP!")
+                stopAP()
+            endAPTimer = 0
 
         time.sleep(3)
 

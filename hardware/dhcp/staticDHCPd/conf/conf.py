@@ -39,6 +39,9 @@ ALLOW_DHCP_RELAYS = True
 
 AUTHORITATIVE = True
 
+DHCP_SERVER_PORT = 1111
+DHCP_CLIENT_PORT = 1112
+
 # Scripts
 
 # the first address that will be allocated (2-255)

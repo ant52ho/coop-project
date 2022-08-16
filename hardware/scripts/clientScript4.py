@@ -201,37 +201,73 @@ def getEdge(r):
     return str(retval)
 
 
-def isWifi():
-    wlan1Mode = str(subprocess.check_output(['iwconfig', 'wlan1']))
-    wlan1State = str(subprocess.check_output(['ifconfig', 'wlan1']))
+def isWifi():  # make this only run if wlan1 exists
+    wlan1Mode = ""
+    wlan1State = ""
+    if ifExists("eth1"):
+        wlan1Mode = str(subprocess.check_output(['iwconfig', 'wlan1']))
+        wlan1State = str(subprocess.check_output(['ifconfig', 'wlan1']))
     wlan0State = str(subprocess.check_output(['ifconfig', 'wlan0']))
     try:
-        wlan1Mode.index("APTest")
-        wlan1State.index("RUNNING")
+        if ifExists("eth1"):
+            wlan1Mode.index("APTest")
+            wlan1State.index("RUNNING")
         wlan0State.index("RUNNING")
     except ValueError:
         return False
     return True
 
 
+def isRoutedtoAP(routerIP):
+    routed = str(subprocess.check_output(
+        ['route', '-n']).decode("utf-8")).split("\n")
+    for line in routed:
+        if line == "":
+            continue
+        route = line.split()
+        if route[-1] == 'wlan0' and route[0] == '10.0.0.1' and route[1] == routerIP:
+            return True
+    return False
+
+# a one time wifi startup
+
+
+def startupWifi(routerIP):
+    # needs testing
+    while True:
+        os.system("wpa_cli -i wlan0 terminate")
+        time.sleep(1)
+        os.system(
+            "wpa_supplicant -Dnl80211,wext -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant-wlan0.conf -B")
+        os.system("sudo dhclient wlan0 -v")
+        time.sleep(2)  # waiting for the ip to update
+        if get_ip("wlan0")[:6] == routerIP[:6]:
+            print('connected to AP dhcp')
+            return
+
+
 def startWifi():
-    os.system("sudo service hostapd start")
-    os.system("sudo service dnsmasq start")
+    if ifExists("eth1"):
+        os.system("sudo service hostapd start")
+        os.system("sudo service dnsmasq start")
     return True
 
 
 def stopWifi():
-    os.system("sudo service hostapd stop")
-    os.system("sudo service dnsmasq stop")
+    if ifExists("eth1"):
+        os.system("sudo service hostapd stop")
+        os.system("sudo service dnsmasq stop")
     return True
 
 
-def routeToWifi():
-    os.system('sudo ip route add 10.0.0.1 via 0.0.0.0 dev wlan0')
+def routeToWifi(routerIP):
+    print("adding route:", routerIP, "to 10.0.0.1")
+    os.system('sudo ip route add 10.0.0.1 via ' + routerIP + ' dev wlan0')
 
 
-def routeToCord():
-    os.system('sudo ip route del 10.0.0.1 via 0.0.0.0 dev wlan0')
+def routeToCord(routerIP):
+    print("deleting route:", routerIP, "to 10.0.0.1")
+    os.system('sudo ip route del 10.0.0.1 via ' + routerIP + ' dev wlan0')
 
     # a new bridge will have to be created
     if (ifExists("eth1") and ifExists("eth0")):
@@ -255,9 +291,14 @@ def ethAllConnected():
         return False
 
 
-def maintainConnectivity():
+def maintainConnectivity(id):
     timerStart = 0  # timer
-    stopWifi()  # for routing purposes
+    routerIP = "11.0." + str(id - 1) + ".1"
+
+    # this line will have to guarentee that it is connected to dhcp,
+    # and can ping an adjacent node via wifi.
+    # maybe it sometimes can't connect to dhcp because the eth route is preventing it?
+    startupWifi(routerIP)
 
     while True:
         # below is accurate because on AP mode, 10.0.0.1 can't ping "forwards"
@@ -265,20 +306,31 @@ def maintainConnectivity():
         ethConnected = ethAllConnected()
         print("ethAllConnected:", ethConnected)
 
-        if not ethConnected and not isWifi():
+        routedToAP = isRoutedtoAP(routerIP)
+
+        # if not ethConnected and not isWifi():
+
+        '''Tomorrow's work'''
+        # routedToAP = check output of route -n, look for a route with 10.0.0.1, routerIP
+        # ^ idea: know if a route is established or not, alternative is just to create one
+        # and check the error logs for if it fails
+        # if not ethConnected and routed:
+
+        if not ethConnected and not routedToAP:
             print("starting AP/C!")
-            startWifi()
-            routeToWifi()
+            # startWifi()
+            routeToWifi(routerIP)
             # reset possible counter
             timerStart = 0
 
-        if ethConnected and isWifi():
+        # if ethConnected and isWifi():
+        if ethConnected and routedToAP:
             if timerStart == 0:
                 timerStart = time.time()
             if time.time() > timerStart + 5 and timerStart != 0:
                 print("stopping AP/C!")
-                stopWifi()
-                routeToCord()
+                # stopWifi()
+                routeToCord(routerIP)
                 timerStart = 0
 
         time.sleep(3)
@@ -402,7 +454,8 @@ if __name__ == "__main__":
     bridgeThread.start()
 
     # maintaining connectivity
-    connectivityThread = threading.Thread(target=maintainConnectivity)
+    connectivityThread = threading.Thread(
+        target=maintainConnectivity, args=(id, ))
     connectivityThread.start()
 
     # maintaining messaging

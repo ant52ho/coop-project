@@ -74,6 +74,9 @@ Setup for client
 # sudo apt install python3-pip
 # sudo pip3 install redis
 # sudo apt-get install bridge-utils
+# sudo apt install dnsmasq
+# sudo apt install hostapd
+# sudo apt install iptables
 
 '''
 Setup for cloud server

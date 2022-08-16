@@ -72,6 +72,15 @@ def createWpaSupplicantConf(id):  # need to add on beginning
     return
 
 
+def createNetworkConf():
+    f = open("/etc/network/interfaces", "w")
+    f.write("source /etc/network/interfaces.d/*" + "\n")
+    f.write("allow-hotplug wlan0" + "\n")
+    f.write("iface wlan0 inet manual" + "\n")
+    f.write("wpa-conf /etc/wpa_supplicant/wpa_supplicant-wlan0.conf" + "\n")
+    f.close()
+
+
 if __name__ == '__main__':
     createDnsmasqConf(1)
     createDhcpcdConf(1)

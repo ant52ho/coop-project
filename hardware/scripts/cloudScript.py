@@ -72,24 +72,44 @@ def handle_client(conn, addr, r):
 
 
 def inputData(msg, r):
-    data = msg[2:].split(',')
-    id = 'sensor' + str(data[0])
-    day = data[1]
 
-    unixTime = int(time.mktime(
-        datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
+    # based off of clientScript4.py updateStatus
+    if msg.split(":")[1] == "status":
+        msg = msg.split(":")
 
-    commands = ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
+        statusDict = {
+            "True": "up",
+            "False": "down",
+        }
 
-    for commandIndex in range(2, len(commands)):
-        newKey = id + ":" + commands[commandIndex]
-        if not r.exists(newKey):
-            r.ts().create(newKey)
+        msg[-1] = statusDict[msg[-1]]
 
-        r.ts().add(key=newKey, timestamp=unixTime,
-                   value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
-    print("stored in redis!")
-    return True
+        cmdKey = (':').join(msg[2:4])
+        cmdValue = msg[-1]
+
+        r.set(cmdKey, cmdValue)
+        return True
+
+    # based on clientScript4.py sendData
+    if msg.split(":")[1] == "data":
+        data = msg[2:].split(',')
+        id = 'sensor' + str(data[0])
+        day = data[1]
+
+        unixTime = int(time.mktime(
+            datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
+
+        commands = ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
+
+        for commandIndex in range(2, len(commands)):
+            newKey = id + ":" + commands[commandIndex]
+            if not r.exists(newKey):
+                r.ts().create(newKey)
+
+            r.ts().add(key=newKey, timestamp=unixTime,
+                       value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
+        print("stored in redis!")
+        return True
 
 
 def start():

@@ -379,7 +379,7 @@ def sendData(entries, edgeClient, id, all=False):
         select = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                   line[windHighIndex], line[precipitationIndex]]
         print(select)
-        select = 'f:' + ','.join(select)
+        select = 'f:data:' + ','.join(select)
 
         retval = send(select, edgeClient)
 
@@ -397,9 +397,9 @@ def sendData(entries, edgeClient, id, all=False):
 def updateStatus(edgeClient, id):
     while True:
         isNeighbourConnected = isConnected('10.0.0.' + str(id - 1))
-        print('f:sensor' + str(id) + ':ethConnected:' +
+        print('f:status:sensor' + str(id) + ':status:' +
               str(isNeighbourConnected))
-        retval = send('f:sensor' + str(id) + ':ethConnected:' +
+        retval = send('f:sensor' + str(id) + ':status:' +
                       str(isNeighbourConnected), edgeClient)
 
         if not retval:

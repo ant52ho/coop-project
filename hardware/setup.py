@@ -73,6 +73,7 @@ Setup for client
 # sudo apt upgrade
 # sudo apt install python3-pip
 # sudo pip3 install redis
+# pip3 install pymodbus
 # sudo apt-get install bridge-utils
 # sudo apt install dnsmasq
 # sudo apt install hostapd
@@ -96,6 +97,12 @@ Setup for cloud server
 # make setup
 # make build
 
-# sudo pip3 install redis --upgrade (because in ubuntu the live redis vesion is 3.5.(something))
+# pip3 install --upgrade redis  (because in ubuntu the live redis vesion is 3.5.(something))
+
+
+# (optional) to check
+# from importlib.metadata import version
+# version('redis')
+
 
 # go into ec2 instance and open port 5050 for socket connection

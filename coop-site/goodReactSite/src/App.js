@@ -6,8 +6,8 @@ import { MuiTable } from "./components/MuiTable";
 import { DataDisplay } from "./components/DataDisplay";
 import { TextWall } from "./components/TextWall";
 import { TestPage } from "./components/TestPage";
-import { Login } from "./components/Login";
-import useToken from "./components/useToken";
+// import { Login } from "./components/Login";
+// import useToken from "./components/useToken";
 
 // function setToken(userToken) {
 //   sessionStorage.setItem("token", JSON.stringify(userToken));
@@ -20,11 +20,11 @@ import useToken from "./components/useToken";
 // }
 
 function App() {
-  const [token, setToken] = useState();
+  // const [token, setToken] = useState();
 
-  if (!token) {
-    return <Login setToken={setToken} />;
-  }
+  // if (!token) {
+  //   return <Login setToken={setToken} />;
+  // }
 
   const logout = () => {
     // setToken(false);

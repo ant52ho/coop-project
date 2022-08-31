@@ -46,7 +46,7 @@ export const Overlay = (props) => {
             <MenuIcon />
           </IconButton>
 
-          <Nav />
+          <Nav logout={props.logout} />
         </Toolbar>
       </AppBar>
       <SideDrawer

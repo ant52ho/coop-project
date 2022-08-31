@@ -12,7 +12,7 @@ import { useState } from "react";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import { blue } from "@mui/material/colors";
 
-export const Nav = () => {
+export const Nav = (props) => {
   //   const open = Boolean(props.anchorEl);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -58,7 +58,7 @@ export const Nav = () => {
       >
         <MenuItem onClick={handleClose}>Profile</MenuItem>
         <MenuItem onClick={handleClose}>My account</MenuItem>
-        <MenuItem onClick={handleClose}>Logout</MenuItem>
+        <MenuItem onClick={props.logout}>Logout</MenuItem>
       </Menu>
     </Box>
   );

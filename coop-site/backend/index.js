@@ -1,7 +1,16 @@
 const moment = require("moment");
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const port = 5000;
+
+app.use(cors());
+
+app.use("/login", (req, res) => {
+  res.send({
+    token: "test123",
+  });
+});
 
 const redis = require("redis");
 const { TimeSeriesAggregationType } = require("@redis/time-series");

@@ -13,6 +13,10 @@ import multiprocessing
 import signal
 from createConfs import *
 
+''' for sensor communication '''
+import minimalmodbus
+import serial
+
 # common constants
 HEADER = 128
 FORMAT = 'utf-8'
@@ -310,12 +314,6 @@ def maintainConnectivity(id):
 
         # if not ethConnected and not isWifi():
 
-        '''Tomorrow's work'''
-        # routedToAP = check output of route -n, look for a route with 10.0.0.1, routerIP
-        # ^ idea: know if a route is established or not, alternative is just to create one
-        # and check the error logs for if it fails
-        # if not ethConnected and routed:
-
         if not ethConnected and not routedToAP:
             print("starting AP/C!")
             # startWifi()
@@ -355,7 +353,104 @@ def send(msg, edgeClient):
         return False
 
 
-def sendData(entries, edgeClient, id, all=False):
+# sendData reads data from nearby sensors and sends it
+def sendData(edgeClient, id):
+
+    # sensepoint sensor 1
+    # note: verify path exists and is correct
+    instrument1 = minimalmodbus.Instrument('/dev/ttyUSB0', 1)
+    instrument1.mode = minimalmodbus.MODE_RTU   # rtu or ascii mode
+
+    # sensor configurations
+    # since all instruments use the same input usb, configuring one sensor
+    #    is the same as configuring the rest
+    instrument1.serial.baudrate = 9600        # Baud
+    instrument1.serial.bytesize = 8
+    instrument1.serial.parity = serial.PARITY_EVEN
+    instrument1.serial.stopbits = 1
+    instrument1.serial.timeout = 0.05          # seconds
+
+    # sensepoint sensor 2
+    instrument2 = minimalmodbus.Instrument('/dev/ttyUSB0', 2)
+    instrument2.mode = minimalmodbus.MODE_RTU
+
+    # sensepoint sensor 3
+    instrument3 = minimalmodbus.Instrument('/dev/ttyUSB0', 3)
+    instrument3.mode = minimalmodbus.MODE_RTU
+
+    # Viconox sensor 4
+    instrument4 = minimalmodbus.Instrument('/dev/ttyUSB0', 4)
+    instrument4.mode = minimalmodbus.MODE_RTU
+
+    # querying multiple sensors successively is not possible without these lines
+    instrument1.close_port_after_each_call = True
+    instrument2.close_port_after_each_call = True
+    instrument3.close_port_after_each_call = True
+    instrument4.close_port_after_each_call = True
+
+    while True:
+        retArr = [str(id)]
+
+        # read sensor 1 sensepoint
+        sensorData = readRegister(instrument1, 31000, 0, 4)
+        if not sensorData["error"]:
+            retArr.append(sensorData["value"])
+        else:
+            retArr.append(None)
+
+        # read sensor 2 sensepoint
+        sensorData = readRegister(instrument2, 31000, 0, 4)
+        if not sensorData["error"]:
+            retArr.append(sensorData["value"])
+        else:
+            retArr.append(None)
+
+        # read sensor 3 sensepoint
+        sensorData = readRegister(instrument3, 31000, 0, 4)
+        if not sensorData["error"]:
+            retArr.append(sensorData["value"])
+        else:
+            retArr.append(None)
+
+        # read sensor 4 viconox
+        sensorData = readRegister(instrument4, 10504, 0, 4)
+        if not sensorData["error"]:
+            retArr.append(sensorData["value"])
+        else:
+            retArr.append(None)
+
+        print(retArr)
+
+        # data format: f:data:id,val,val,val...
+        select = 'f:data:' + ','.join(retArr)
+
+        retval = send(select, edgeClient)
+
+        # if server doesn't respond
+        if not retval:
+            break
+
+        # delay before next query
+        time.sleep(3)
+
+
+# readRegister reads a sensor register and returns a dict object with error and
+#   value
+def readRegister(instrument, address, decimals, code):
+    retval = {}
+    try:
+        # read_register(registeraddress: int, number_of_decimals: int = 0,
+        #   functioncode: int = 3, signed: bool = False)
+        retval["value"] = instrument.read_register(address, decimals, code)
+        retval["error"] = False
+    except Exception as e:
+        print(e)
+        retval["value"] = e
+        retval["error"] = True
+    return retval
+
+
+def sendFakeData(entries, edgeClient, id, all=False):
 
     # indices of interesting data
     dayIndex = 0
@@ -369,6 +464,7 @@ def sendData(entries, edgeClient, id, all=False):
     heading = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                line[windHighIndex], line[precipitationIndex]]
     print(heading)
+
     count = 0
     while True:
         if count == entries and all == False:
@@ -379,6 +475,8 @@ def sendData(entries, edgeClient, id, all=False):
         select = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                   line[windHighIndex], line[precipitationIndex]]
         print(select)
+
+        # data format: f:data:id,val,val,val...
         select = 'f:data:' + ','.join(select)
 
         retval = send(select, edgeClient)
@@ -414,11 +512,18 @@ def startEdgeClient(edgeClient, id):  # should exit if fails
     if not retval:
         return
 
+    # sending status thread
     statusThread = threading.Thread(target=updateStatus, args=(edgeClient, id))
     statusThread.start()
 
+    # sending data thread
     dataThread = threading.Thread(
-        target=sendData, args=(10, edgeClient, id, True))
+        target=sendData, args=(edgeClient, id))
+
+    # sending fake data thread (for testing)
+    # dataThread = threading.Thread(
+    #     target=sendFakeData, args=(10, edgeClient, id, True))
+
     dataThread.start()
 
     statusThread.join()

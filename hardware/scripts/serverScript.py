@@ -13,9 +13,6 @@ import threading
 # set to true when debugging
 dbRESET = True
 
-# set to "" if wanting a dynamic last node
-manualLastNode = ""
-
 # this program runs from the server. it detects for disconnections,
 # switches modes if a disconnection is detected.
 
@@ -27,7 +24,7 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 # Cloud constants
 CLOUD_PORT = 5050  # this port will have to change for edge server
-CLOUD_SERVER = "18.219.10.248"
+CLOUD_SERVER = "3.15.28.149"
 CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
 
 # Edge constants
@@ -64,9 +61,6 @@ def isConnected(ip):
 
 
 def lastNode(sqliteConnection):
-    if manualLastNode != "":
-        return manualLastNode
-
     max_ip = "10.0.0.1"
 
     # obtain the last node from the database

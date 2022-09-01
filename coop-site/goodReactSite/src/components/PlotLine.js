@@ -50,8 +50,8 @@ function toSeconds(scope, startDate, endDate) {
     start = end - duration * 60 * 60 * 24 * 30;
     format = "MMM D, YYYY;M/D";
   } else if (unit === "All") {
-    start = 0;
-    end = date;
+    start = "-";
+    end = "+";
     console.log("start, end", start, end);
     format = "MMMM D;M/D";
   } else if (unit === "Custom") {
@@ -144,7 +144,7 @@ export const PlotLine = (props) => {
       <Stack display={"flex"} alignItems={"center"}>
         {scope === "All" ? (
           <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-            Line graph for all available points
+            Line graph measuring {props.sensor} for all available points
           </Typography>
         ) : (
           <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>

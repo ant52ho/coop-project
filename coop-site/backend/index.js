@@ -155,13 +155,13 @@ app.get("*", async (req, res) => {
 
       // the key may or may not exist, use try
       try {
-        var bucket = Math.round((endTime - startTime) / entries);
+        var bucket;
 
-        // for "all" query, might change
-        if (startTime === endTime) {
-          startTime = "-";
-          endTime = "+";
+        if (startTime === "-" && endTime === "+") {
+          // if "all"
           bucket = 1000;
+        } else {
+          bucket = Math.round((endTime - startTime) / entries);
         }
 
         value = await redisClient.ts.range(cmd, startTime, endTime, {

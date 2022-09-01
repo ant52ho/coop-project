@@ -285,7 +285,7 @@ def startEdgeServer(redisConnection):
             target=handle_client, args=(conn, addr, redisConnection))
         thread.start()
 
-        # this line might be inaccurate when using both at once
+        # this line is inaccurate, use math to make it accurate cause constant scaling
         print(f"[ACTIVE EDGE CONNECTIONS] {threading.active_count() - 1}")
 
 

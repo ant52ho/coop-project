@@ -20,9 +20,9 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 # key retention duration in redis
 RETENTION = 3600000  # retention in milliseconds
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(ADDR)
+# DATAFORMAT is the format which data is inputted from clientScript
+# note: could make dataformat into a dict for alternative naming
+DATAFORMAT = ["id", "day", "val1", "val2", "val3", "val4"]
 
 
 def resetRedisKeys():
@@ -61,9 +61,6 @@ def handle_client(conn, addr, r):
 
         # add additional functions here
 
-        elif msg == 'get_ip':
-            ip = reply_ip(conn)
-
         elif len(msg) >= 2 and msg[:2] == 'f:':
             print('received forwarded message')
             inputData(msg, r)
@@ -92,14 +89,21 @@ def inputData(msg, r):
 
     # based on clientScript4.py sendData
     if msg.split(":")[1] == "data":
-        data = msg[2:].split(',')
+        # f:data:id,val,val,val...
+        data = msg.split(":")[-1].split(',')
+        # data = msg[2:].split(',')
+
         id = 'sensor' + str(data[0])
-        day = data[1]
+        # day = data[1]
 
-        unixTime = int(time.mktime(
-            datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
+        # unixTime = int(time.mktime(
+        #     datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
 
-        commands = ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
+        # commands =  ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
+
+        unixTime = int(data[1])
+
+        commands = DATAFORMAT
 
         for commandIndex in range(2, len(commands)):
             newKey = id + ":" + commands[commandIndex]
@@ -135,5 +139,8 @@ def start():
 
 
 if __name__ == '__main__':
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(ADDR)
     print("[STARTING] server is starting...")
     start()

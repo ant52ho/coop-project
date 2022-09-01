@@ -389,7 +389,8 @@ def sendData(edgeClient, id):
     instrument4.close_port_after_each_call = True
 
     while True:
-        retArr = [str(id)]
+        curTime = int(time.time())
+        retArr = [str(id), curTime]
 
         # read sensor 1 sensepoint
         sensorData = readRegister(instrument1, 31000, 0, 4)
@@ -495,6 +496,7 @@ def sendFakeData(entries, edgeClient, id, all=False):
 def updateStatus(edgeClient, id):
     while True:
         isNeighbourConnected = isConnected('10.0.0.' + str(id - 1))
+        # f:status:sensor1:status:True
         print('f:status:sensor' + str(id) + ':status:' +
               str(isNeighbourConnected))
         retval = send('f:sensor' + str(id) + ':status:' +

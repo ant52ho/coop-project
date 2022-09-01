@@ -14,7 +14,7 @@ print(redis.__version__)
 RETENTION = 86400000  # retention in milliseconds
 
 
-f = open("/home/antho/coop-project/hardware/austin_weather.csv", "r")
+f = open("/home/ubuntu/austin_weather.csv", "r")
 
 # indices of interesting data
 dayIndex = 0
@@ -68,7 +68,7 @@ def spSendData(entries, idNumber, r, delay, all=False):
 
     id = idNumber
 
-    f = open("/home/antho/coop-project/hardware/austin_weather.csv", "r")
+    f = open("/home/ubuntu/austin_weather.csv", "r")
     line = f.readline().split(',')
     heading = [str(id), line[dayIndex], line[tempHighIndex], line[tempLowIndex],
                line[windHighIndex], line[precipitationIndex]]

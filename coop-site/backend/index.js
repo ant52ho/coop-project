@@ -76,6 +76,7 @@ app.get("/status", async (req, res) => {
   var retval = [];
   try {
     // gets all status keys and sorts them
+    // looks for keys with format: sensor*:status
     var value = await redisClient.keys("sensor*:status");
     value.sort(
       (a, b) =>

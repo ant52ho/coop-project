@@ -50,6 +50,9 @@ function toSeconds(scope, startDate, endDate) {
     start = end - duration * 60 * 60 * 24 * 30;
     format = "MMM D, YYYY;M/D";
   } else if (unit === "All") {
+    start = 0;
+    end = date;
+    console.log("start, end", start, end);
     format = "MMMM D;M/D";
   } else if (unit === "Custom") {
     start = startDate / 1000;
@@ -101,13 +104,16 @@ export const PlotLine = (props) => {
 
   const formatLong = scopeDetails.format.split(";")[0];
   const formatShort = scopeDetails.format.split(";")[1];
+
   startDate = scopeDetails.start;
   endDate = scopeDetails.end;
+
   const colorRangeInfo = {
     colorStart: 0,
     colorEnd: 1,
     useEndAsStart: false,
   };
+
   const colours = interpolateColors(
     ips.length,
     interpolateRainbow,

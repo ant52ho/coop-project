@@ -157,6 +157,7 @@ app.get("*", async (req, res) => {
       try {
         var bucket = Math.round((endTime - startTime) / entries);
 
+        // for "all" query, might change
         if (startTime === endTime) {
           startTime = "-";
           endTime = "+";

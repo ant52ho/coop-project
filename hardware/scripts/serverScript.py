@@ -296,18 +296,12 @@ def startCloudClient(cloudClient):
 
     while True:
         try:
-            msg = input()
-            if msg == 'aah' or msg == DISCONNECT_MESSAGE:
-                send(DISCONNECT_MESSAGE)
-                break
-            elif msg == 'get_ip':
-                ip = get_ip(cloudClient)
-                print(ip)
-            else:
-                send(msg, cloudClient)
+            send('f:sensor1:status:True', cloudClient)
         except Exception as e:
             print("disconnected from cloud server")
             break
+
+        time.sleep(3)
 
 
 def maintainCloudClient():

@@ -12,7 +12,7 @@ import datetime
 HEADER = 128  # strings should just be this long, right
 PORT = 5050  # this port will have to change for edge server
 #SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = '172.31.18.196'  # must be private ip address
+SERVER = '172.31.41.126'  # must be private ip address
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
@@ -106,9 +106,16 @@ def inputData(msg, r):
         commands = DATAFORMAT
 
         for commandIndex in range(2, len(commands)):
+
+            if data[commandIndex] == "None":
+                continue
+
             newKey = id + ":" + commands[commandIndex]
             if not r.exists(newKey):
                 r.ts().create(newKey)
+
+            print("\n", newKey, unixTime,
+                  data[commandIndex])
 
             r.ts().add(key=newKey, timestamp=unixTime,
                        value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
@@ -117,13 +124,13 @@ def inputData(msg, r):
 
 
 def start():
-    os.system('sudo service redis-server stop')
+    # os.system('sudo service redis-server stop')
 
-    # initiates the redis server
-    redis_thread = threading.Thread(
-        target=restartRedis, args=("redisCloud.conf",))
-    redis_thread.start()
-    time.sleep(3)
+    # # initiates the redis server
+    # redis_thread = threading.Thread(
+    #     target=restartRedis, args=("redisCloud.conf",))
+    # redis_thread.start()
+    # time.sleep(3)
 
     # connects to the redis server
     r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)

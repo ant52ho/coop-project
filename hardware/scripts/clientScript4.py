@@ -389,41 +389,43 @@ def sendData(edgeClient, id):
     instrument4.close_port_after_each_call = True
 
     while True:
-        curTime = int(time.time())
+        curTime = str(int(time.time()))
         retArr = [str(id), curTime]
 
         # read sensor 1 sensepoint
         sensorData = readRegister(instrument1, 31000, 0, 4)
         if not sensorData["error"]:
-            retArr.append(sensorData["value"])
+            retArr.append(str(sensorData["value"]))
         else:
-            retArr.append(None)
+            retArr.append("None")
 
         # read sensor 2 sensepoint
         sensorData = readRegister(instrument2, 31000, 0, 4)
         if not sensorData["error"]:
-            retArr.append(sensorData["value"])
+            retArr.append(str(sensorData["value"]))
         else:
-            retArr.append(None)
+            retArr.append("None")
 
         # read sensor 3 sensepoint
         sensorData = readRegister(instrument3, 31000, 0, 4)
         if not sensorData["error"]:
-            retArr.append(sensorData["value"])
+            retArr.append(str(sensorData["value"]))
         else:
-            retArr.append(None)
+            retArr.append("None")
 
         # read sensor 4 viconox
         sensorData = readRegister(instrument4, 10504, 0, 4)
         if not sensorData["error"]:
-            retArr.append(sensorData["value"])
+            retArr.append(str(sensorData["value"]))
         else:
-            retArr.append(None)
+            retArr.append("None")
 
         print(retArr)
 
         # data format: f:data:id,val,val,val...
         select = 'f:data:' + ','.join(retArr)
+
+        print(select)
 
         retval = send(select, edgeClient)
 

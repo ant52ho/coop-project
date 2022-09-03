@@ -119,11 +119,16 @@ app.get("*", async (req, res) => {
     console.log(query);
     query.shift();
 
-    var ips = query[0].split(":")[1].split(",");
-    ips = ips.map((ip) => {
-      var temp = ip.split(".");
-      ip = temp[temp.length - 1];
-      return "sensor" + ip;
+    // var ips = query[0].split(":")[1].split(",");
+    // ips = ips.map((ip) => {
+    //   var temp = ip.split(".");
+    //   ip = temp[temp.length - 1];
+    //   return "sensor" + ip;
+    // });
+
+    var ids = query[0].split(":")[1].split(",");
+    ids = ids.map((id) => {
+      return "sensor" + id;
     });
 
     const sensor = query[1].split(":")[1];
@@ -139,7 +144,8 @@ app.get("*", async (req, res) => {
     //   endTime = moment().unix();
     // }`;
 
-    console.log(ips);
+    // console.log(ips);
+    console.log(ids);
     console.log(sensor);
     console.log(startTime);
     console.log(endTime);
@@ -148,9 +154,11 @@ app.get("*", async (req, res) => {
     var data = [];
     var value;
 
-    for (let sensorIndex = 0; sensorIndex < ips.length; sensorIndex++) {
-      const sensorNumber = ips[sensorIndex];
-      const cmd = ips[sensorIndex] + ":" + sensor;
+    for (let sensorIndex = 0; sensorIndex < ids.length; sensorIndex++) {
+      const sensorNumber = ids[sensorIndex];
+      // const sensorNumber = ips[sensorIndex];
+      // const cmd = ips[sensorIndex] + ":" + sensor;
+      const cmd = ids[sensorIndex] + ":" + sensor;
       console.log("cmd:", cmd);
 
       // the key may or may not exist, use try

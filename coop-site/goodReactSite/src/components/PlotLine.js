@@ -67,7 +67,8 @@ export const PlotLine = (props) => {
   const toggle = props.toggle;
   const cmd = props.cmd;
   var sensor = props.sensor;
-  const ips = cmd.ips;
+  // const ips = cmd.ips;
+  const ids = cmd.ids;
   var scope = cmd.scope;
   const entries = cmd.entries;
   var startDate = cmd.startDate;
@@ -78,23 +79,24 @@ export const PlotLine = (props) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // we convert the sensor to a comprehensible format
-  const dict = {
-    Gas1: "tempHigh",
-    Gas2: "tempLow",
-    Gas3: "wind",
-    Gas4: "rain",
-  };
+  // we convert the sensor to a comprehensible format -- done in cloudScript
+  // const dict = {
+  //   Gas1: "tempHigh",
+  //   Gas2: "tempLow",
+  //   Gas3: "wind",
+  //   Gas4: "rain",
+  // };
 
-  if (sensor in dict) {
-    sensor = dict[sensor];
-  }
+  // if (sensor in dict) {
+  //   sensor = dict[sensor];
+  // }
 
   var scopeDetails = toSeconds(scope, startDate, endDate);
   var retval =
     "/" +
     [
-      "ips:" + ips.join(),
+      "ids:" + ids.join(),
+      // "ips:" + ips.join(),
       "sensor:" + sensor,
       "scope:" + scopeDetails.start + "," + scopeDetails.end,
       "entries:" + entries,
@@ -115,7 +117,8 @@ export const PlotLine = (props) => {
   };
 
   const colours = interpolateColors(
-    ips.length,
+    ids.length,
+    // ips.length,
     interpolateRainbow,
     colorRangeInfo
   );

@@ -57,12 +57,14 @@ export const DataDisplay = () => {
   const [endDate, setEndDate] = useState(moment());
   const [scope, setScope] = useState("");
   const [ips, setIps] = useState([]);
+  const [ids, setIds] = useState([]);
   const [sensors, setSensors] = useState([]);
   const [graphs, setGraphs] = useState(["Line"]);
   const [entries, setEntries] = useState(1000);
   const [cmd, setCmd] = useState({
     graphs: graphs,
-    ips: ips,
+    // ips: ips,
+    ids: ids,
     sensors: sensors,
     scope: scope,
     startDate: startDate,
@@ -73,7 +75,8 @@ export const DataDisplay = () => {
 
   const [errors, setErrors] = useState({
     graphs: { error: false, text: "" },
-    ips: { error: false, text: "" },
+    // ips: { error: false, text: "" },
+    ids: { error: false, text: "" },
     sensors: { error: false, text: "" },
     scope: { error: false, text: "" },
     entries: { error: false, text: "" },
@@ -81,7 +84,8 @@ export const DataDisplay = () => {
     endDate: { error: false, text: "" },
   });
   const [statusData, setStatusData] = useState([]);
-  const [ipsList, setIpsList] = useState([]);
+  // const [ipsList, setIpsList] = useState([]);
+  const [idsList, setIdsList] = useState([]);
   const [sensorList, setSensorList] = useState([]);
   const [reloadToggle, setReloadToggle] = useState(false);
 
@@ -91,10 +95,12 @@ export const DataDisplay = () => {
 
   const location = useLocation();
   if (location.state) {
-    const id = location.state.id;
-    console.log(id);
-    console.log(ips);
-    setIps(["10.0.0." + id]);
+    const id1 = location.state.id;
+    console.log(id1);
+    // console.log(ips);
+    // setIps(["10.0.0." + id]);
+    setIds([id1]);
+
     location.state = null;
   }
 
@@ -166,28 +172,52 @@ export const DataDisplay = () => {
     setEntries(value);
   };
 
-  const handleIPChange = (event) => {
+  // const handleIPChange = (event) => {
+  //   const value = event.target.value;
+  //   if (
+  //     value.length === 0 ||
+  //     (value[value.length - 1] === "all" && ips.length === ipsList.length)
+  //   ) {
+  //     setErrors((prevState) => ({
+  //       ...prevState,
+  //       ips: { error: true, text: "Select an IP" },
+  //     }));
+  //   } else {
+  //     setErrors((prevState) => ({
+  //       ...prevState,
+  //       ips: { error: false, text: "" },
+  //     }));
+  //   }
+
+  //   if (value[value.length - 1] === "all") {
+  //     setIps(ips.length === ipsList.length ? [] : ipsList);
+  //     return;
+  //   }
+  //   setIps(value);
+  // };
+
+  const handleIDChange = (event) => {
     const value = event.target.value;
     if (
       value.length === 0 ||
-      (value[value.length - 1] === "all" && ips.length === ipsList.length)
+      (value[value.length - 1] === "all" && ids.length === idsList.length)
     ) {
       setErrors((prevState) => ({
         ...prevState,
-        ips: { error: true, text: "Select an IP" },
+        ids: { error: true, text: "Select an ID" },
       }));
     } else {
       setErrors((prevState) => ({
         ...prevState,
-        ips: { error: false, text: "" },
+        ids: { error: false, text: "" },
       }));
     }
 
     if (value[value.length - 1] === "all") {
-      setIps(ips.length === ipsList.length ? [] : ipsList);
+      setIds(ids.length === idsList.length ? [] : idsList);
       return;
     }
-    setIps(value);
+    setIds(value);
   };
 
   const handleSensorChange = (event) => {
@@ -234,7 +264,8 @@ export const DataDisplay = () => {
     if (valid) {
       setCmd({
         graphs: graphs,
-        ips: ips,
+        // ips: ips,
+        ids: ids,
         sensors: sensors,
         scope: scope,
         startDate: startDate,
@@ -253,31 +284,41 @@ export const DataDisplay = () => {
 
   useEffect(() => {
     valid = !(
-      ips.length === 0 ||
-      graphs.length === 0 ||
-      sensors.length === 0 ||
-      entries == 0 ||
-      scope === null ||
-      scope === "" ||
-      (scope == "Custom" &&
-        (startDate > endDate || !startDate.isValid() || !endDate.isValid()))
+      // ips.length === 0 ||
+      (
+        ids.length === 0 ||
+        graphs.length === 0 ||
+        sensors.length === 0 ||
+        entries == 0 ||
+        scope === null ||
+        scope === "" ||
+        (scope === "Custom" &&
+          (startDate > endDate || !startDate.isValid() || !endDate.isValid()))
+      )
     );
+    console.log(valid);
   });
 
   useEffect(() => {
     console.log("collecting status data");
     const getData = async () => {
       try {
-        var tempIpsList = [];
-
         // status query
         const status = await axios.get("/status");
         setStatusData(status.data);
 
+        // // set a list of all IPs.
+        // var tempIpsList = [];
+        // for (var i = 0; i < status.data.length; i++) {
+        //   tempIpsList.push(status.data[i].ip);
+        // }
+        // setIpsList(tempIpsList);
+
+        var tempIdsList = [];
         for (var i = 0; i < status.data.length; i++) {
-          tempIpsList.push(status.data[i].ip);
+          tempIdsList.push(status.data[i].id);
         }
-        setIpsList(tempIpsList);
+        setIdsList(tempIdsList);
 
         // sensor query
         const sensorsReq = await axios.get("/sensors");
@@ -315,13 +356,21 @@ export const DataDisplay = () => {
         />
       </Stack>
       <Stack direction="row" spacing={3} display={"border-box"}>
-        <MultiSelect
+        {/* <MultiSelect
           label="IPs"
           options={ipsList}
           value={ips}
           error={errors.ips.error}
           helperText={errors.ips.text}
           handleChange={handleIPChange}
+        /> */}
+        <MultiSelect
+          label="IDs"
+          options={idsList}
+          value={ids}
+          error={errors.ids.error}
+          helperText={errors.ids.text}
+          handleChange={handleIDChange}
         />
         <MultiSelect
           label="Sensors"

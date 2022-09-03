@@ -1,46 +1,16 @@
-from pymodbus.client.sync import (
-    ModbusSerialClient,
-    ModbusTcpClient,
-    ModbusTlsClient,
-    ModbusUdpClient,
-)
+import minimalmodbus
+import serial
+import time
 
-# PORT = 'COM3'  # windows
-# PORT = '/dev/ttyUSB0'
-PORT = '/dev/ttyUSB0'
+# port name, slave address (in decimal)
+instrument1 = minimalmodbus.Instrument('/dev/ttyUSB0', 1)
 
-if __name__ == '__main__':
-
-    # array for slaves
-    slavesArr = [1]
-
-    # note: needs to have same setup as rest of nodes
-    client = ModbusSerialClient(
-        port=PORT,  # serial port
-        # timeout=10,
-        # retries=3,
-        # retry_on_empty=True,
-        # close_comm_on_error=True,
-        baudrate=9600,
-        # bytesize=8,
-        parity="E",  # None, Even, Odd
-        # stopbits=1,
-        #    handle_local_echo=False,
-    )
-
-    print("### Client starting")
-    val = client.connect()
-    print(client.is_socket_open())
-    print(val)
-    val = client.read_holding_registers(
-        address=31001, count=10, slave=1)
-    print(val)
-
-    # # address, count, slave
-    # for slaveId in slavesArr:
-
-    #     val = client.read_holding_registers(
-    #         address=31000, count=1, slave=slaveId)
-    #     print(val)
-
-    client.close()
+instrument1.serial.baudrate = 9600        # Baud
+instrument1.serial.bytesize = 8
+instrument1.serial.parity = serial.PARITY_EVEN
+instrument1.serial.stopbits = 1
+instrument1.serial.timeout = 0.05          # seconds
+instrument1.mode = minimalmodbus.MODE_RTU   # rtu or ascii mode
+instrument1.close_port_after_each_call = True
+retval = instrument1.read_register(31000, 0, 4)
+print(retval)

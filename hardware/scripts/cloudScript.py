@@ -21,8 +21,27 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 RETENTION = 3600000  # retention in milliseconds
 
 # DATAFORMAT is the format which data is inputted from clientScript
+#   DATAFORMAT must be consistent across both programs
 # note: could make dataformat into a dict for alternative naming
+# ie: sensor2:val1
 DATAFORMAT = ["id", "day", "val1", "val2", "val3", "val4"]
+
+SENSORS = DATAFORMAT[2:]
+
+# constants for chart formatting, must be consistent with dataformat
+DATAUNITS = {
+    "val1": "unit1",
+    "val2": "unit2",
+    "val3": "unit3",
+    "val4": "unit4",
+}
+
+DATALABELS = {
+    "val1": "label1",
+    "val2": "label2",
+    "val3": "label3",
+    "val4": "label4",
+}
 
 
 def resetRedisKeys():
@@ -134,6 +153,16 @@ def start():
 
     # connects to the redis server
     r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
+
+    # stores data constants into redis
+
+    r.set("sensors", ",".join(SENSORS))
+
+    for key in DATAUNITS:  # ie val1:unit -> unit1
+        r.set(key + ":unit", DATAUNITS[key])
+
+    for key in DATALABELS:  # ie val1:label -> label1
+        r.set(key + ":label", DATALABELS[key])
 
     # initializes socket server
     server.listen()

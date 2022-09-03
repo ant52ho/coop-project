@@ -392,6 +392,9 @@ def sendData(edgeClient, id):
         curTime = str(int(time.time()))
         retArr = [str(id), curTime]
 
+        # this part may seem like spaghetti code. This is because it is
+        #   more seriously however, each function may need a custom input param
+
         # read sensor 1 sensepoint
         sensorData = readRegister(instrument1, 31000, 0, 4)
         if not sensorData["error"]:

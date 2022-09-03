@@ -43,6 +43,16 @@ DATALABELS = {
     "val4": "label4",
 }
 
+# bounds of the data
+#   formatted in [min, max]
+#   use [0,0] if bounds are auto
+DATABOUNDS = {
+    "val1": [0, 0],
+    "val2": [0, 0],
+    "val3": [0, 0],
+    "val4": [0, 0],
+}
+
 
 def resetRedisKeys():
     r = redis.Redis(host='127.0.0.1', port=6379, password='rat')
@@ -155,7 +165,6 @@ def start():
     r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
 
     # stores data constants into redis
-
     r.set("sensors", ",".join(SENSORS))
 
     for key in DATAUNITS:  # ie val1:unit -> unit1
@@ -163,6 +172,10 @@ def start():
 
     for key in DATALABELS:  # ie val1:label -> label1
         r.set(key + ":label", DATALABELS[key])
+
+    for key in DATABOUNDS:  # ie val1:min -> 0, val1:max -> 0
+        r.set(key + ":min", DATABOUNDS[key][0])
+        r.set(key + ":max", DATABOUNDS[key][1])
 
     # initializes socket server
     server.listen()

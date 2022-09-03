@@ -3,16 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = 5000;
-
-app.use(cors());
-
-app.use("/login", (req, res) => {
-  res.send({
-    token: "test123",
-  });
-});
-
 const redis = require("redis");
+
 const { TimeSeriesAggregationType } = require("@redis/time-series");
 
 const redisClient = redis.createClient({
@@ -24,6 +16,14 @@ const redisClient = redis.createClient({
 });
 
 redisClient.connect().catch(console.error);
+
+app.use(cors());
+
+app.use("/login", (req, res) => {
+  res.send({
+    token: "test123",
+  });
+});
 
 app.get("/api", async (req, res) => {
   try {
@@ -126,23 +126,50 @@ app.get("*", async (req, res) => {
     //   return "sensor" + ip;
     // });
 
+    // gets a list of all the selected IDs
+    // ie [sensor1, sensor2...]
     var ids = query[0].split(":")[1].split(",");
     ids = ids.map((id) => {
       return "sensor" + id;
     });
 
+    // gets constants associated with the sensor
     const sensor = query[1].split(":")[1];
+    var sensorLabel = await redisClient.get(sensor + ":label");
+    var sensorUnit = await redisClient.get(sensor + ":unit");
+    var sensorMin = await redisClient.get(sensor + ":min");
+    var sensorMax = await redisClient.get(sensor + ":max");
+
+    if (!sensorUnit) {
+      //default
+      sensorUnit = sensor + "Unit";
+    }
+
+    if (!sensorLabel) {
+      //default
+      sensorLabel = sensor + "Label";
+    }
+
+    if (!sensorMin || !sensorMax) {
+      // default
+      sensorMin = 0;
+      sensorMax = "auto";
+    } else {
+      sensorMin = parseInt(sensorMin);
+      sensorMax = parseInt(sensorMax);
+    }
+
+    var sensorConstants = {
+      unit: sensorUnit,
+      label: sensorLabel,
+      min: sensorMin,
+      max: sensorMax,
+    };
+
     const scope = query[2].split(":")[1].split(",");
     const entries = query[3].split(":")[1];
     var startTime = scope[0];
     var endTime = scope[1];
-    `
-    // if (endTime > moment().unix()) {
-    //   if (startTime > moment().unix()) {
-    //     startTime = moment().unix();
-    //   }
-    //   endTime = moment().unix();
-    // }`;
 
     // console.log(ips);
     console.log(ids);
@@ -182,17 +209,20 @@ app.get("*", async (req, res) => {
             timeBucket: bucket,
           },
         });
-        console.log("value:", value);
+        // console.log("value:", value);
       } catch (e) {
         console.log(e);
         value = [];
       }
 
-      console.log(value);
+      // console.log(value);
 
-      data.push({ sensor: sensorNumber, data: value });
+      data.push({
+        sensor: sensorNumber,
+        data: value,
+        constants: sensorConstants,
+      });
     }
-
     console.log(data[0]);
 
     res.status(200).send(data);

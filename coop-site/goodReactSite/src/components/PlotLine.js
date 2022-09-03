@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography, Card, CardContent } from "@mui/material";
 import { interpolateColors } from "../scripts/generateColour";
 import { interpolateRainbow } from "d3-scale-chromatic";
 import moment from "moment";
@@ -141,63 +141,110 @@ export const PlotLine = (props) => {
     getData();
   }, [toggle]);
 
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Card variant="outlined" p={2}>
+          <CardContent>
+            {/* Time */}
+            <p>{`${payload[0].name}: ${moment(payload[0].value * 1000).format(
+              "Y/M/D kk:mm"
+            )}`}</p>
+            {/* Label */}
+            <p>{`${payload[1].name}: ${payload[1].value}`}</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <Box display={"inline-block"}>
-      {/* <Stack> */}
-      <Stack display={"flex"} alignItems={"center"}>
-        {scope === "All" ? (
-          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-            Line graph measuring {props.sensor} for all available points
-          </Typography>
-        ) : (
-          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-            Line graph for: {props.sensor} from{" "}
-            {moment(startDate * 1000).format(formatLong)} to{" "}
-            {moment(endDate * 1000).format(formatLong)}
-          </Typography>
-        )}
-        <Box sx={{ width: 750, height: 300 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart
-              width={"100%"}
-              height={"100%"}
-              margin={{
-                top: 20,
-                right: 20,
-                bottom: 20,
-                left: 20,
-              }}
-            >
-              <CartesianGrid />
-              <XAxis
-                type="number"
-                dataKey="timestamp"
-                name="stature"
-                domain={["dataMin", "dataMax"]}
-                unit=""
-                tickCount="10"
-                tickFormatter={(unixTime) =>
-                  moment(unixTime * 1000).format(formatShort)
-                }
-              />
-              <YAxis type="number" dataKey="value" name="weight" unit="unit" />
-              <ZAxis type="number" range={[100]} />
-              <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-              <Legend />
-              {backendData.map((node, i) => (
-                <Scatter
-                  key={i}
-                  name={node.sensor}
-                  data={node.data}
-                  fill={colours[i]}
-                  line
-                  shape="circle"
+      {backendData.length !== 0 && (
+        <Stack
+          display={"flex"}
+          alignItems={"center"}
+          direction={"column"}
+          marginBottom={5}
+        >
+          {scope === "All" ? (
+            <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+              Line graph measuring {props.sensor} for all available points
+            </Typography>
+          ) : (
+            <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+              Line graph for: {props.sensor} from{" "}
+              {moment(startDate * 1000).format(formatLong)} to{" "}
+              {moment(endDate * 1000).format(formatLong)}
+            </Typography>
+          )}
+          <Box sx={{ width: 800, height: 350 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart
+                width={"100%"}
+                height={"100%"}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 0,
+                  left: 40,
+                }}
+              >
+                <CartesianGrid />
+                <XAxis
+                  type="number"
+                  dataKey="timestamp"
+                  name="Time"
+                  domain={["dataMin", "dataMax"]}
+                  // unit=""
+                  tickCount="10"
+                  tickFormatter={(unixTime) =>
+                    moment(unixTime * 1000).format(formatShort)
+                  }
                 />
-              ))}
-            </ScatterChart>
-          </ResponsiveContainer>
-        </Box>
-      </Stack>
+                <YAxis
+                  type="number"
+                  dataKey="value"
+                  domain={[
+                    backendData[0].constants.min,
+                    backendData[0].constants.max,
+                  ]}
+                  name={backendData[0].constants.label}
+                  label={{
+                    value: `${backendData[0].constants.label} (${backendData[0].constants.unit})`,
+                    angle: -90,
+                    position: "insideLeft",
+                    dy: 70,
+                  }}
+                />
+                <ZAxis type="number" range={[100]} />
+                <Tooltip content={<CustomTooltip />} />
+                {/* <Tooltip /> */}
+                <Legend
+                  layout="horizontal"
+                  verticalAlign="top"
+                  align="center"
+                  wrapperStyle={{ paddingBottom: 15 }}
+                />
+                {backendData.map((node, i) => (
+                  <Scatter
+                    key={i}
+                    name={node.sensor}
+                    data={node.data}
+                    fill={colours[i]}
+                    line
+                    shape="circle"
+                  />
+                ))}
+              </ScatterChart>
+            </ResponsiveContainer>
+          </Box>
+          <Typography variant="subtitle1">Date ({formatShort})</Typography>
+        </Stack>
+      )}
+      {/* <Stack> */}
     </Box>
   );
 };

@@ -21,7 +21,9 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 BUCKET = 3600
 
 # all key retention duration in redis
-RETENTION = BUCKET * 2 * 1000  # retention in milliseconds
+RETENTIONALL = BUCKET * 2 * 1000  # retention in milliseconds
+
+RETENTIONCOMPACT = 0  # in ms
 
 
 # DATAFORMAT is the format which data is inputted from clientScript
@@ -150,7 +152,7 @@ def inputData(msg, r):
 
             # creating aggregation key, and all key
             if not r.exists(newKey):
-                r.ts().create(newKey)
+                r.ts().create(newKey, retention_msecs=RETENTIONCOMPACT)
 
             if not r.exists(newKeyAll):
                 r.ts().create(newKeyAll)
@@ -162,7 +164,7 @@ def inputData(msg, r):
                 pass
 
             r.ts().add(key=newKeyAll, timestamp=unixTime,
-                       value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
+                       value=data[commandIndex], retention_msecs=RETENTIONALL, duplicate_policy='last')
         print("stored in redis!")
         return True
 

@@ -17,8 +17,12 @@ ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
-# key retention duration in redis
-RETENTION = 3600000  # retention in milliseconds
+# bucket retention in redis (s)
+BUCKET = 3600
+
+# all key retention duration in redis
+RETENTION = BUCKET * 2 * 1000  # retention in milliseconds
+
 
 # DATAFORMAT is the format which data is inputted from clientScript
 #   DATAFORMAT must be consistent across both programs
@@ -130,23 +134,34 @@ def inputData(msg, r):
 
         # commands =  ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
 
-        unixTime = int(data[1])
+        unixTime = int(data[1])  # unit dependent on clientScript4, keep at "s"
 
         commands = DATAFORMAT
 
         for commandIndex in range(2, len(commands)):
 
+            # if sensor doesn't have data
             if data[commandIndex] == "None":
                 continue
 
+            # 1 key for all, one key for bucketed
             newKey = id + ":" + commands[commandIndex]
+            newKeyAll = id + ":" + commands[commandIndex] + ":all"
+
+            # creating aggregation key, and all key
             if not r.exists(newKey):
                 r.ts().create(newKey)
 
-            print("\n", newKey, unixTime,
-                  data[commandIndex])
+            if not r.exists(newKeyAll):
+                r.ts().create(newKeyAll)
 
-            r.ts().add(key=newKey, timestamp=unixTime,
+            # creating the aggregation rule
+            try:
+                r.ts().createrule(newKeyAll, newKey, "avg", BUCKET)
+            except redis.exceptions.ResponseError:
+                pass
+
+            r.ts().add(key=newKeyAll, timestamp=unixTime,
                        value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
         print("stored in redis!")
         return True

@@ -10,8 +10,11 @@ import threading
 
 print(redis.__version__)
 
-# key retention duration in redis
-RETENTION = 86400000  # retention in milliseconds
+# bucket retention in redis (s)
+BUCKET = 86400 * 2
+
+# all key retention duration in redis
+RETENTION = BUCKET * 2 * 1000  # retention in milliseconds
 
 # indices of interesting data
 dayIndex = 0
@@ -41,15 +44,29 @@ def inputData(msg, r):
     commands = ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
 
     for commandIndex in range(2, len(commands)):
-        newKey = id + ":" + commands[commandIndex]
-        if not r.exists(newKey):
-            r.ts().create(newKey, labels={
-                "id": data[0], "sensor": commands[commandIndex]})
+        # if sensor doesn't have data
+        if data[commandIndex] == "None":
+            continue
 
-        r.ts().add(key=newKey, timestamp=unixTime,
-                   value=data[commandIndex],
-                   retention_msecs=RETENTION,
-                   duplicate_policy='last')
+        # 1 key for all, one key for bucketed
+        newKey = id + ":" + commands[commandIndex]
+        newKeyAll = id + ":" + commands[commandIndex] + ":all"
+
+        # creating aggregation key, and all key
+        if not r.exists(newKey):
+            r.ts().create(newKey)
+
+        if not r.exists(newKeyAll):
+            r.ts().create(newKeyAll)
+
+        # creating the aggregation rule
+        try:
+            r.ts().createrule(newKeyAll, newKey, "avg", BUCKET)
+        except redis.exceptions.ResponseError:
+            pass
+
+        r.ts().add(key=newKeyAll, timestamp=unixTime,
+                   value=data[commandIndex], retention_msecs=RETENTION, duplicate_policy='last')
     print("stored in redis!")
     return True
 
@@ -85,6 +102,7 @@ def spSendData(entries, idNumber, r, delay, all=False):
         inputData(select, r)
         time.sleep(delay)  # for debugging
         count += 1
+
     return True
 
 
@@ -102,8 +120,11 @@ if __name__ == '__main__':
     r.flushdb()
 
     # entires, id, redis, delay, sendAll?
-    for id in range(1, 6):
+    for id in range(1, 2):
         spSendData(50, id, r, 0)
+        print(r.ts().range("sensor1:rain", "-", "+"))
+        print(r.ts().range("sensor1:rain:all", "-", "+"))
+
     print("data created!")
 
     r.set("sensor6:status", "down")

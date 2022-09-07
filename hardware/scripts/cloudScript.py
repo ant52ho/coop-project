@@ -25,39 +25,86 @@ RETENTIONALL = BUCKET * 2 * 1000  # retention in milliseconds
 
 RETENTIONCOMPACT = 0  # in ms. 0 or None mean indefinite
 
+'''This section should be copy/pasted to match cloudScript.py and collectSensorData.py'''
 
 # DATAFORMAT is the format which data is inputted from clientScript
 #   DATAFORMAT must be consistent across both programs
 # note: could make dataformat into a dict for alternative naming
 # ie: sensor2:val1
-DATAFORMAT = ["id", "day", "val1", "val2", "val3", "val4"]
+# should change to an dictionary that matches to index ie: 1: "id"
+DATAFORMAT = ["id", "time", "h2", "isobutylene", "propane", "ammonia",
+              "chlorine", "vis", "co", "temperature", "humidity",
+              "no", "no2", "nox"]
+
+DATAINDICES = {
+    0: "id",
+    1: "time",
+    2: "h2",
+    3: "isobutylene",
+    4: "propane",
+    5: "ammonia",
+    6: "chlorine",
+    7: "vis",
+    8: "co",
+    9: "temperature",
+    10: "humidity",
+    11: "no",
+    12: "no2",
+    13: "nox",
+}
 
 SENSORS = DATAFORMAT[2:]
 
 # constants for chart formatting, must be consistent with dataformat
 DATAUNITS = {
-    "val1": "unit1",
-    "val2": "unit2",
-    "val3": "unit3",
-    "val4": "unit4",
+    "h2": "LEL%",
+    "isobutylene": "ppm",
+    "propane": "LEL%",
+    "ammonia": "ppm",
+    "chlorine": "ppm",
+    "vis": "%",
+    "co": "ppm",
+    "temperature": "°C",
+    "humidity": "%",
+    "no": "ppm",
+    "no2": "ppm",
+    "nox": "ppm",
 }
 
 DATALABELS = {
-    "val1": "label1",
-    "val2": "label2",
-    "val3": "label3",
-    "val4": "label4",
+    "h2": "H2",
+    "isobutylene": "Isobutylene",
+    "propane": "C3H8",
+    "ammonia": "NH3",
+    "chlorine": "Cl2",
+    "vis": "Opacity",
+    "co": "CO",
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "no": "NO",
+    "no2": "NO2",
+    "nox": "NOX",
 }
 
 # bounds of the data
 #   formatted in [min, max]
 #   use [0,0] if bounds are auto
 DATABOUNDS = {
-    "val1": [0, 0],
-    "val2": [0, 0],
-    "val3": [0, 0],
-    "val4": [0, 0],
+    "h2": [0, 100],
+    "isobutylene": [0, 100],
+    "propane": [0, 100],
+    "ammonia": [0, 100],
+    "chlorine": [0, 20],
+    "vis": [0, 100],
+    "co": [0, 300],
+    "temperature": [-40, 100],
+    "humidity": [0, 100],
+    "no": [0, 100],
+    "no2": [0, 10],
+    "nox": [0, 100],
 }
+
+''' end of section '''
 
 
 def resetRedisKeys():
@@ -138,7 +185,8 @@ def inputData(msg, r):
 
         unixTime = int(data[1])  # unit dependent on clientScript4, keep at "s"
 
-        commands = DATAFORMAT
+        # commands = DATAFORMAT
+        commands = DATAINDICES
 
         for commandIndex in range(2, len(commands)):
 
@@ -146,7 +194,7 @@ def inputData(msg, r):
             if data[commandIndex] == "None":
                 continue
 
-            # 1 key for all, one key for bucketed
+            # 1 key for "all", one key for "averaged"
             newKey = id + ":" + commands[commandIndex]
             newKeyAll = id + ":" + commands[commandIndex] + ":all"
 

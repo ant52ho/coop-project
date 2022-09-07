@@ -12,6 +12,7 @@ import select
 import multiprocessing
 import signal
 from createConfs import *
+from collectSensorData import *
 
 ''' for sensor communication '''
 import minimalmodbus
@@ -355,87 +356,15 @@ def send(msg, edgeClient):
 
 # sendData reads data from nearby sensors and sends it
 def sendData(edgeClient, id):
-
-    # sensepoint sensor 1
-    # note: verify path exists and is correct
-    instrument1 = minimalmodbus.Instrument('/dev/ttyUSB0', 1)
-    instrument1.mode = minimalmodbus.MODE_RTU   # rtu or ascii mode
-
-    # sensor configurations
-    # since all instruments use the same input usb, configuring one sensor
-    #    is the same as configuring the rest
-    instrument1.serial.baudrate = 9600        # Baud
-    instrument1.serial.bytesize = 8
-    instrument1.serial.parity = serial.PARITY_EVEN
-    instrument1.serial.stopbits = 1
-    instrument1.serial.timeout = 0.05          # seconds
-
-    # sensepoint sensor 2
-    instrument2 = minimalmodbus.Instrument('/dev/ttyUSB0', 2)
-    instrument2.mode = minimalmodbus.MODE_RTU
-
-    # sensepoint sensor 3
-    instrument3 = minimalmodbus.Instrument('/dev/ttyUSB0', 3)
-    instrument3.mode = minimalmodbus.MODE_RTU
-
-    # Viconox sensor 4
-    instrument4 = minimalmodbus.Instrument('/dev/ttyUSB0', 4)
-    instrument4.mode = minimalmodbus.MODE_RTU
-
-    # querying multiple sensors successively is not possible without these lines
-    instrument1.close_port_after_each_call = True
-    instrument2.close_port_after_each_call = True
-    instrument3.close_port_after_each_call = True
-    instrument4.close_port_after_each_call = True
-
     while True:
-        curTime = str(int(time.time()))
-        retArr = [str(id), curTime]
-
-        # this part may seem like spaghetti code. This is because it is
-        #   more seriously however, each function may need a custom input param
-
-        # read sensor 1 sensepoint
-        sensorData = readRegister(instrument1, 31000, 0, 4)
-        if not sensorData["error"]:
-            retArr.append(str(sensorData["value"]))
-        else:
-            retArr.append("None")
-
-        # read sensor 2 sensepoint
-        sensorData = readRegister(instrument2, 31000, 0, 4)
-        if not sensorData["error"]:
-            retArr.append(str(sensorData["value"]))
-        else:
-            retArr.append("None")
-
-        # read sensor 3 sensepoint
-        sensorData = readRegister(instrument3, 31000, 0, 4)
-        if not sensorData["error"]:
-            retArr.append(str(sensorData["value"]))
-        else:
-            retArr.append("None")
-
-        # read sensor 4 viconox
-        sensorData = readRegister(instrument4, 10504, 0, 4)
-        if not sensorData["error"]:
-            retArr.append(str(sensorData["value"]))
-        else:
-            retArr.append("None")
-
-        print(retArr)
-
-        # data format: f:data:id,val,val,val...
+        retArr = collectSensorData(id)
         select = 'f:data:' + ','.join(retArr)
-
         print(select)
-
         retval = send(select, edgeClient)
-
         # if server doesn't respond
         if not retval:
-            break
-
+            # break
+            time.sleep(10)  # timeout for connection
         # delay before next query
         time.sleep(3)
 

@@ -9,10 +9,10 @@ import time
 import datetime
 
 # user defined constants:
-HEADER = 128  # strings should just be this long, right
+HEADER = 128  # max str length for socket comm
 PORT = 5050  # this port will have to change for edge server
 #SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = '172.31.41.126'  # must be private ip address
+SERVER = '172.31.41.126'  # must be ec2 private ip address
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
@@ -23,7 +23,7 @@ BUCKET = 3600
 # all key retention duration in redis
 RETENTIONALL = BUCKET * 2 * 1000  # retention in milliseconds
 
-RETENTIONCOMPACT = 0  # in ms
+RETENTIONCOMPACT = 0  # in ms. 0 or None mean indefinite
 
 
 # DATAFORMAT is the format which data is inputted from clientScript

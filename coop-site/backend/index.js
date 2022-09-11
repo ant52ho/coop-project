@@ -202,6 +202,7 @@ app.get("*", async (req, res) => {
         } else {
           bucket = Math.round((endTime - startTime) / entries);
         }
+        console.log("cmd:", cmd, startTime, endTime);
 
         value = await redisClient.ts.range(cmd, startTime, endTime, {
           // value = await redisClient.ts.range(cmd, "-", "+", {

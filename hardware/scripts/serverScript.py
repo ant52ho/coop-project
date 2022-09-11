@@ -297,10 +297,10 @@ def startCloudClient(cloudClient):
     send('hello world', cloudClient)
 
     while True:
-        try:
-            send('f:status:sensor1:status:True', cloudClient)
-        except Exception as e:
-            print("disconnected from cloud server")
+        print('f:status:sensor1:status:True')
+        retval = send('f:status:sensor1:status:True', cloudClient)
+
+        if not retval:
             break
 
         time.sleep(3)

@@ -189,6 +189,9 @@ def inputData(msg, r):
         commands = DATAINDICES
 
         # print(data)
+        if len(data) != len(DATAFORMAT):
+            print("wrong data format! data not stored", data)
+            return False
 
         for commandIndex in range(2, len(commands)):
 

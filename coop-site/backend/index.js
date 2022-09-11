@@ -185,7 +185,7 @@ app.get("*", async (req, res) => {
       const sensorNumber = ids[sensorIndex];
       // const sensorNumber = ips[sensorIndex];
       // const cmd = ips[sensorIndex] + ":" + sensor;
-      const cmd = ids[sensorIndex] + ":" + sensor;
+      var cmd = ids[sensorIndex] + ":" + sensor;
       console.log("cmd:", cmd);
 
       // the key may or may not exist, use try
@@ -195,6 +195,10 @@ app.get("*", async (req, res) => {
         if (startTime === "-" && endTime === "+") {
           // if "all"
           bucket = 1;
+        } else if (endTime - startTime <= 60 * 60 * 2) {
+          // ideally should be "RETENTION" constant
+          cmd = ids[sensorIndex] + ":" + sensor + ":all";
+          bucket = Math.round((endTime - startTime) / entries);
         } else {
           bucket = Math.round((endTime - startTime) / entries);
         }

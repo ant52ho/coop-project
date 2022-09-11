@@ -188,6 +188,8 @@ def inputData(msg, r):
         # commands = DATAFORMAT
         commands = DATAINDICES
 
+        # print(data)
+
         for commandIndex in range(2, len(commands)):
 
             # if sensor doesn't have data

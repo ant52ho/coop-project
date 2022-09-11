@@ -141,7 +141,7 @@ export const PlotLine = (props) => {
     getData();
   }, [toggle]);
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label, unit }) => {
     if (active && payload && payload.length) {
       return (
         <Card variant="outlined" p={2}>
@@ -151,7 +151,7 @@ export const PlotLine = (props) => {
               "Y/M/D kk:mm"
             )}`}</p>
             {/* Label */}
-            <p>{`${payload[1].name}: ${payload[1].value}`}</p>
+            <p>{`${payload[1].name}: ${payload[1].value}${unit}`}</p>
           </CardContent>
         </Card>
       );
@@ -220,7 +220,11 @@ export const PlotLine = (props) => {
                   }}
                 />
                 <ZAxis type="number" range={[100]} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  content={
+                    <CustomTooltip unit={backendData[0].constants.unit} />
+                  }
+                />
                 {/* <Tooltip /> */}
                 <Legend
                   layout="horizontal"

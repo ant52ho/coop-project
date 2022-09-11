@@ -363,8 +363,8 @@ def sendData(edgeClient, id):
         retval = send(select, edgeClient)
         # if server doesn't respond
         if not retval:
-            # break
-            time.sleep(10)  # timeout for connection
+            print("failed to send to edge!")
+            time.sleep(3)  # timeout for connection
         # delay before next query
         time.sleep(3)
 
@@ -433,7 +433,7 @@ def updateStatus(edgeClient, id):
         # f:status:sensor1:status:True
         print('f:status:sensor' + str(id) + ':status:' +
               str(isNeighbourConnected))
-        retval = send('f:sensor' + str(id) + ':status:' +
+        retval = send('f:status:sensor' + str(id) + ':status:' +
                       str(isNeighbourConnected), edgeClient)
 
         if not retval:

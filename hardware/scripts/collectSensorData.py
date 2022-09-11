@@ -9,7 +9,7 @@ import time
 # note: could make dataformat into a dict for alternative naming
 # ie: sensor2:val1
 # should change to an dictionary that matches to index ie: 1: "id"
-DATAFORMAT = ["id", "time", "h2", "isobutylene", "propane", "ammonia",
+DATAFORMAT = ["id", "time", "h2", "isobutylene", "ammonia", "propane",
               "chlorine", "vis", "co", "temperature", "humidity",
               "no", "no2", "nox"]
 
@@ -18,8 +18,8 @@ DATAINDICES = {
     1: "time",
     2: "h2",
     3: "isobutylene",
-    4: "propane",
-    5: "ammonia",
+    4: "ammonia",
+    5: "propane",
     6: "chlorine",
     7: "vis",
     8: "co",
@@ -36,8 +36,8 @@ SENSORS = DATAFORMAT[2:]
 DATAUNITS = {
     "h2": "LEL%",
     "isobutylene": "ppm",
-    "propane": "LEL%",
     "ammonia": "ppm",
+    "propane": "LEL%",
     "chlorine": "ppm",
     "vis": "%",
     "co": "ppm",
@@ -51,8 +51,8 @@ DATAUNITS = {
 DATALABELS = {
     "h2": "H2",
     "isobutylene": "Isobutylene",
-    "propane": "C3H8",
     "ammonia": "NH3",
+    "propane": "C3H8",
     "chlorine": "Cl2",
     "vis": "Opacity",
     "co": "CO",
@@ -69,8 +69,8 @@ DATALABELS = {
 DATABOUNDS = {
     "h2": [0, 100],
     "isobutylene": [0, 100],
-    "propane": [0, 100],
     "ammonia": [0, 100],
+    "propane": [0, 100],
     "chlorine": [0, 20],
     "vis": [0, 100],
     "co": [0, 300],
@@ -88,8 +88,8 @@ DATABOUNDS = {
 SLAVEIDS = {
     1: "h2",
     2: "isobutylene",
-    3: "propane",
-    4: "ammonia",
+    3: "ammonia",
+    4: "propane",
     5: "chlorine",
     6: "viconox",
 }
@@ -107,7 +107,7 @@ def readSensepoint(instrument, gas):
     try:
         retval = instrument.read_register(31000, 0, 4)
         trueVal = scale800_4000(retval, DATABOUNDS[gas])
-        return trueVal
+        return str(trueVal)
     except Exception as e:
         return "None"
 
@@ -118,7 +118,7 @@ def readViconoxValue(instrument, address, rnd):
             retval = int(instrument.read_float(address, 4, 2, 0))
         else:
             retval = round(instrument.read_float(address, 4, 2, 0), rnd)
-        return retval
+        return str(retval)
     except Exception as e:
         return "None"
 
@@ -201,8 +201,8 @@ def collectSensorData(id):
 
         h2 = readSensepoint(instrument1, "h2")
         isobutylene = readSensepoint(instrument2, "isobutylene")
-        propane = readSensepoint(instrument3, "propane")
-        ammonia = readSensepoint(instrument4, "ammonia")
+        ammonia = readSensepoint(instrument3, "ammonia")
+        propane = readSensepoint(instrument4, "propane")
         chlorine = readSensepoint(instrument5, "chlorine")
 
         values = readViconox(instrument6)
@@ -214,7 +214,14 @@ def collectSensorData(id):
         no2 = values[5]
         nox = values[6]
 
-        retArr = [str(id), curTime, h2, isobutylene, propane,
-                  ammonia, chlorine, vis, co, temp, humidity, no, no2, nox]
+        retArr = [str(id), curTime, h2, isobutylene, ammonia,
+                  propane, chlorine, vis, co, temp, humidity, no, no2, nox]
 
         return retArr
+
+
+if __name__ == "__main__":
+    while True:
+        data = collectSensorData(2)
+        print(data)
+        time.sleep(3)

@@ -18,7 +18,7 @@ instrument2.mode = minimalmodbus.MODE_RTU
 instrument3 = minimalmodbus.Instrument('/dev/ttyUSB0', 3)
 instrument3.mode = minimalmodbus.MODE_RTU
 
-instrument4 = minimalmodbus.Instrument('/dev/ttyUSB0', 4)
+instrument4 = minimalmodbus.Instrument('/dev/ttyUSB0', 6)
 instrument4.mode = minimalmodbus.MODE_RTU
 
 instrument1.close_port_after_each_call = True
@@ -34,12 +34,12 @@ while True:
     try:
         retval = instrument1.read_register(31000, 0, 4)
         print(retval)
-        retval = instrument2.read_registers(31010, 2, 4)
-        print(retval)
-        retval = instrument2.read_float(31010, 4, 2, 0)
-        print(retval)
-        retval = instrument2.read_registers(31209, 2, 4)
-        print(retval)
+        # retval = instrument2.read_registers(31010, 2, 4)
+        # print(retval)
+        # retval = instrument2.read_float(31010, 4, 2, 0)
+        # print(retval)
+        # retval = instrument2.read_registers(31209, 2, 4)
+        # print(retval)
         # retval = instrument1.read_float(31209, 4, 2, 0)
         # print(retval)
         # retval = instrument1.read_registers(31219, 2, 4)
@@ -50,10 +50,10 @@ while True:
         # print(retval)
         # retval = instrument1.read_float(31223, 4, 2, 2)
         # print(retval)
-        retval = instrument4.read_register(10504, 0, 4)
-        print(retval)
-        retval = instrument4.read_registers(10504, 2, 4)
-        print(retval)
+        # retval = instrument4.read_register(10504, 0, 4)
+        # print(retval)
+        # retval = instrument4.read_registers(10504, 2, 4)
+        # print(retval)
         retval = instrument4.read_float(10500, 4, 2, 0)
         print(retval)
         retval = instrument4.read_float(10502, 4, 2, 0)

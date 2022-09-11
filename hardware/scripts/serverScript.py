@@ -262,7 +262,9 @@ def send(msg, cloudClient):
         cloudClient.send(message)
         print(cloudClient.recv(HEADER).decode(FORMAT))
         return True
-    except AttributeError:  # cloud client isn't connected
+    # except AttributeError:  # cloud client isn't connected
+    except Exception as e:
+        print(e)
         return False
 
 
@@ -296,7 +298,7 @@ def startCloudClient(cloudClient):
 
     while True:
         try:
-            send('f:sensor1:status:True', cloudClient)
+            send('f:status:sensor1:status:True', cloudClient)
         except Exception as e:
             print("disconnected from cloud server")
             break

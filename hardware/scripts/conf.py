@@ -3,6 +3,7 @@ This file is a file of constants.
 Modifying the constants will change the nature of the program
 '''
 
+'''cloudscript constants'''
 
 '''clientscript constants'''
 # common constants
@@ -20,7 +21,7 @@ EDGE_ID = EDGE_SERVER.split(".")[0]
 EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
 
 
-'''collectSensorData constants'''
+'''sensor data formatting'''
 # DATAFORMAT is the format which data is inputted from clientScript
 #   DATAFORMAT must be consistent across both programs
 # note: could make dataformat into a dict for alternative naming
@@ -97,8 +98,6 @@ DATABOUNDS = {
     "no2": [0, 10],
     "nox": [0, 100],
 }
-
-''' end of section '''
 
 # this constant does nothing. It should only help as a notepad to
 #   track modbus slave setup

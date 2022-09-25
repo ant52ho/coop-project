@@ -26,11 +26,18 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 # Edge constants
 EDGE_PORT = 5060
 #EDGE_SERVER = socket.gethostbyname(socket.gethostname())
-EDGE_SERVER = '10.0.0.1'
+EDGE_SERVER = '20.0.0.1'
+EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
+# ie 20, or 192. Note: incomplete subnet, cheap id
+EDGE_ID = EDGE_SERVER.split(".")[0]
 EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
 
 
 ''' Universal functions '''
+
+
+def getPartialSubnet(ip):  # ie 20.0.0.5 -> 20.0.0
+    return ".".join(ip.split(".")[:3])
 
 
 def get_ip(iface: str) -> str:
@@ -51,13 +58,13 @@ def ifExists(ifname):
 def get_id() -> int:
     if ifExists('br0'):
         ip = get_ip('br0')
-        if ip[:2] == "10":
-            id = ip[7:]
+        if ip.split(".")[0] == EDGE_ID:
+            id = ip.split(".")[-1]
             return int(id)
 
-    ip = get_ip('eth0')  # ie 10.0.0.3
-    if ip[:2] == "10":
-        id = ip[7:]
+    ip = get_ip('eth0')  # ie 20.0.0.3
+    if ip.split(".")[0] == EDGE_ID:  # ie if [20].0.0.1 == [11].0.0.2
+        id = ip.split(".")[-1]
         return int(id)
 
     return -1
@@ -88,7 +95,10 @@ def isIfConnected(ifname):
 
 def isDHCPConnected(ifname):
     ipaddr = get_ip(ifname)
-    if (ipaddr[:6] != "10.0.0"):
+    subnet = getPartialSubnet(ipaddr)  # ie. 20.0.0
+    edgeSubnet = EDGE_PARTIAL_SUBNET  # ie. 20.0.0
+
+    if (subnet != edgeSubnet):
         return False
     else:
         return True
@@ -101,8 +111,10 @@ def connectDHCP():
     os.system('sudo dhclient eth0 -p 1112 -v')
     time.sleep(3)  # waiting for the ip to update
     ipaddr = get_ip("eth0")
+    subnet = getPartialSubnet(ipaddr)  # ie. 20.0.0
+    edgeSubnet = EDGE_PARTIAL_SUBNET  # ie. 20.0.0
     print("current ip addr: ", ipaddr)
-    if (ipaddr[:6] == "10.0.0"):
+    if (subnet == edgeSubnet):
         print("dhcp connected")
         return True
     else:
@@ -141,7 +153,8 @@ def getDHCPIp():
 
 
 def makeBridge(id):
-    ipaddr = "10.0.0." + str(id)
+    edgeSubnet = EDGE_PARTIAL_SUBNET + ".0/24"  # ie. 20.0.0.0/24
+    ipaddr = EDGE_PARTIAL_SUBNET + "." + str(id)
     # if IP address is correct
     print("Bridge IP: " + ipaddr)
     os.system('sudo brctl addbr br0')  # package alraedy installed
@@ -152,12 +165,15 @@ def makeBridge(id):
     os.system('sudo ifconfig br0 ' + ipaddr)
     # for some reason, eth0 interferes with adding the following route
     os.system('sudo ip addr flush dev eth0')
-    os.system('sudo ip route add 10.0.0.0/24 via ' + ipaddr + ' dev br0')
+    os.system('sudo ip route add ' + edgeSubnet +
+              ' via ' + ipaddr + ' dev br0')
     print("Bridge made")
     return True
 
 
 def maintainBridge(id):
+    ipaddr = EDGE_PARTIAL_SUBNET + "." + str(id)  # ie 20.0.0.3
+
     createBridge = True
     while True:
         eth0Exists = ifExists("eth0")
@@ -165,7 +181,7 @@ def maintainBridge(id):
 
         if (not eth0Exists or not eth1Exists):
             createBridge = True
-            os.system("sudo ifconfig eth0 10.0.0." + str(id))
+            os.system("sudo ifconfig eth0 " + ipaddr)
 
         if (createBridge and eth1Exists and eth0Exists):
             createBridge = not makeBridge(id)
@@ -200,7 +216,7 @@ def getEdge(r):
         retval = r.ping()
     except Exception as e:
         print("unable to connect to redis server")
-        return '10.0.0.1'
+        return EDGE_SERVER
 
     retval = r.get('lastNode')
     return str(retval)
@@ -230,7 +246,7 @@ def isRoutedtoAP(routerIP):
         if line == "":
             continue
         route = line.split()
-        if route[-1] == 'wlan0' and route[0] == '10.0.0.1' and route[1] == routerIP:
+        if route[-1] == 'wlan0' and route[0] == EDGE_SERVER and route[1] == routerIP:
             return True
     return False
 
@@ -238,15 +254,17 @@ def isRoutedtoAP(routerIP):
 
 
 def startupWifi(routerIP):
+    # routerIP: 11.0. + str(id - 1) + .1, so 11.0.2.1
     # needs testing
     while True:
         os.system("wpa_cli -i wlan0 terminate")
         time.sleep(1)
         os.system(
-            "wpa_supplicant -Dnl80211,wext -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant-wlan0.conf -B")
+            "sudo wpa_supplicant -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant-wlan0.conf -B")
         os.system("sudo dhclient wlan0 -v")
         time.sleep(2)  # waiting for the ip to update
-        if get_ip("wlan0")[:6] == routerIP[:6]:
+        ip = get_ip("wlan0")
+        if getPartialSubnet(ip) == getPartialSubnet(routerIP):
             print('connected to AP dhcp')
             return
 
@@ -266,13 +284,15 @@ def stopWifi():
 
 
 def routeToWifi(routerIP):
-    print("adding route:", routerIP, "to 10.0.0.1")
-    os.system('sudo ip route add 10.0.0.1 via ' + routerIP + ' dev wlan0')
+    print("adding route:", routerIP, "to " + EDGE_SERVER)
+    os.system('sudo ip route add ' + EDGE_SERVER +
+              ' via ' + routerIP + ' dev wlan0')
 
 
 def routeToCord(routerIP):
-    print("deleting route:", routerIP, "to 10.0.0.1")
-    os.system('sudo ip route del 10.0.0.1 via ' + routerIP + ' dev wlan0')
+    print("deleting route:", routerIP, "to " + EDGE_SERVER)
+    os.system('sudo ip route del ' + EDGE_SERVER +
+              ' via ' + routerIP + ' dev wlan0')
 
     # a new bridge will have to be created
     if (ifExists("eth1") and ifExists("eth0")):
@@ -285,9 +305,9 @@ def redisEth(r):
 
 
 def ethAllConnected():
-    r = redis.Redis(host='10.0.0.1', port=6379,
+    r = redis.Redis(host=EDGE_SERVER, port=6379,
                     password='rat', decode_responses=True)
-    if isConnected('10.0.0.1'):
+    if isConnected(EDGE_SERVER):
         retval = r.get("ethAllConnected")
         if retval == "True":
             return True
@@ -298,7 +318,9 @@ def ethAllConnected():
 
 def maintainConnectivity(id):
     timerStart = 0  # timer
-    routerIP = "11.0." + str(id - 1) + ".1"
+    # ie if edge is 20.0.0.1, then edgeIDPlus1 = 21
+    edgeIDPlus1 = str(int(EDGE_ID) + 1)
+    routerIP = edgeIDPlus1 + ".0." + str(id - 1) + ".1"
 
     # this line will have to guarentee that it is connected to dhcp,
     # and can ping an adjacent node via wifi.
@@ -306,7 +328,7 @@ def maintainConnectivity(id):
     startupWifi(routerIP)
 
     while True:
-        # below is accurate because on AP mode, 10.0.0.1 can't ping "forwards"
+        # below is accurate because on AP mode, [EDGE_SERVER] can't ping "forwards"
         #   because of specific port forwarding
         ethConnected = ethAllConnected()
         print("ethAllConnected:", ethConnected)
@@ -429,7 +451,8 @@ def sendFakeData(entries, edgeClient, id, all=False):
 
 def updateStatus(edgeClient, id):
     while True:
-        isNeighbourConnected = isConnected('10.0.0.' + str(id - 1))
+        isNeighbourConnected = isConnected(
+            EDGE_PARTIAL_SUBNET + "." + str(id - 1))
         # f:status:sensor1:status:True
         print('f:status:sensor' + str(id) + ':status:' +
               str(isNeighbourConnected))

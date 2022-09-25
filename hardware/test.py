@@ -1,11 +1,5 @@
-sample = {
-    1: "a",
-    2: "a",
-    3: "a",
-    4: "a",
-    5: "a",
-}
-
-print(len(sample))
-
-print(sample[1])
+ip = "192.169.179.121"
+print(ip.split(".")[0])
+print(ip.split(".")[-1])
+print(".".join(ip.split(".")[:3]))
+print(".".join(ip.split(".")[:3]) + ".0/24")

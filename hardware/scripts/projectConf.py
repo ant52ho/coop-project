@@ -3,6 +3,10 @@ This file is a file of constants.
 Modifying the constants will change the nature of the program
 '''
 
+'''The below constant MUST be the as in the dhcp server's conf.py'''
+EDGE_SERVER = '20.0.0.1'
+'''Take extra care to remember the above ^'''
+
 '''cloudscript constants'''
 
 '''serverScript constants'''

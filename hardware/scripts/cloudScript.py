@@ -9,23 +9,6 @@ import time
 import datetime
 from projectConf import *
 
-# user defined constants:
-HEADER = 128  # max str length for socket comm
-PORT = 5050  # this port will have to change for edge server
-#SERVER = socket.gethostbyname(socket.gethostname())
-SERVER = '172.31.41.126'  # must be ec2 private ip address
-ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-
-# bucket retention in redis (s)
-BUCKET = 3600
-
-# all key retention duration in redis
-RETENTIONALL = BUCKET * 2 * 1000  # retention in milliseconds
-
-RETENTIONCOMPACT = 0  # in ms. 0 or None mean indefinite
-
 
 def resetRedisKeys():
     r = redis.Redis(host='127.0.0.1', port=6379, password='rat')
@@ -49,7 +32,7 @@ def recv(conn, addr):
 
 
 def reply_ip(conn):
-    conn.send("10.0.0.1".encode(FORMAT))
+    conn.send(EDGE_SERVER.encode(FORMAT))
 
 
 def handle_client(conn, addr, r):
@@ -169,7 +152,7 @@ def start():
 
     # initializes socket server
     server.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
+    print(f"[LISTENING] Server is listening on {CLOUD_PUBLIC_SERVER}")
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr, r))
@@ -180,6 +163,6 @@ def start():
 if __name__ == '__main__':
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind(ADDR)
+    server.bind(CLOUD_PRIVATE_ADDR)
     print("[STARTING] server is starting...")
     start()

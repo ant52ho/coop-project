@@ -1,7 +1,7 @@
 import minimalmodbus
 import serial
 import time
-from conf import *
+from projectConf import *
 # scales val on a 800-4000 scale to a different, specified scale
 
 

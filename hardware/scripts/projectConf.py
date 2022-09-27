@@ -4,48 +4,35 @@ Modifying the constants will change the nature of the program
 '''
 
 '''The below constant MUST be the as in the dhcp server's conf.py'''
+
 EDGE_SERVER = '20.0.0.1'
+
 '''Take extra care to remember the above ^'''
 
-'''cloudscript constants'''
-
-'''serverScript constants'''
-
-# common constants
-HEADER = 128
+'''socket, server constants'''
+HEADER = 128  # max str length for socket comm
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
-# Cloud constants
+
 CLOUD_PORT = 5050  # this port will have to change for edge server
-CLOUD_SERVER = "3.15.28.149"
-CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
+CLOUD_PRIVATE_SERVER = '172.31.41.126'  # must be ec2 private ip address
+CLOUD_PRIVATE_ADDR = (CLOUD_PRIVATE_SERVER, CLOUD_PORT)
+CLOUD_PUBLIC_SERVER = "3.15.28.149"
+CLOUD_PUBLIC_ADDR = (CLOUD_PUBLIC_SERVER, CLOUD_PORT)
 
-# Edge constants
 EDGE_PORT = 5060
-#EDGE_SERVER = socket.gethostbyname(socket.gethostname())
-EDGE_SERVER = '20.0.0.1'
 EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
 # ie 20, or 192. Note: incomplete subnet, cheap id
 EDGE_ID = EDGE_SERVER.split(".")[0]
 EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
 
-
-'''clientscript constants'''
-# common constants
-HEADER = 128
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-
-# Edge constants
-EDGE_PORT = 5060
-#EDGE_SERVER = socket.gethostbyname(socket.gethostname())
-EDGE_SERVER = '20.0.0.1'
-EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
-# ie 20, or 192. Note: incomplete subnet, cheap id
-EDGE_ID = EDGE_SERVER.split(".")[0]
-EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
-
+'''redis database constants'''
+# bucket retention in redis (s)
+BUCKET = 3600
+# all key retention duration in redis
+RETENTIONALL = BUCKET * 2 * 1000  # retention in milliseconds
+RETENTIONCOMPACT = 0  # in ms. 0 or None mean indefinite
 
 '''sensor data formatting'''
 # DATAFORMAT is the format which data is inputted from clientScript

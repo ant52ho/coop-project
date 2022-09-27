@@ -2,6 +2,14 @@ import logging
 import sqlite3
 import redis
 
+'''BELOW CONSTANT MUST BE THE SAME AS FROM projectConf.py'''
+
+EDGE_SERVER = '20.0.0.1'
+
+'''TAKE EXTRA CARE ^'''
+
+EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
+
 
 # Copy this file to one of the following locations, then rename it to conf.py:
 # /etc/staticDHCPd/, ./conf/
@@ -24,7 +32,7 @@ UID = 0
 GID = 0
 
 # The IP of the interface to use for DHCP traffic
-DHCP_SERVER_IP = '10.0.0.1'
+DHCP_SERVER_IP = EDGE_SERVER
 
 # The database-engine to use
 # For details, see the configuration guide in the documentation.
@@ -46,7 +54,7 @@ DHCP_CLIENT_PORT = 1112
 
 # the first address that will be allocated (2-255)
 # ie if 10.0.0.2, then put 2
-SECOND_ID = 2
+SECOND_ID = int(EDGE_SERVER.split(".")[-1]) + 1
 
 # this function connects the unknown mac to the dhcp server
 
@@ -72,9 +80,10 @@ def filterPacket(packet, method, mac, client_ip, relay_ip, port):
                 id = SECOND_ID
             else:
                 id = int(records[0]) + 1
-            ip = "10.0.0." + str(id)
+            ip = EDGE_PARTIAL_SUBNET + "." + str(id)
+            edgeSubnet = EDGE_PARTIAL_SUBNET + ".0/24"
             addDevice = 'INSERT INTO maps (id, mac, ip, hostname, subnet, serial) VALUES (' + str(
-                id) + ', "' + str(mac) + '", "' + ip + '", ' + 'NULL, "10.0.0.0/24", 0);'
+                id) + ', "' + str(mac) + '", "' + ip + '", ' + 'NULL, "' + edgeSubnet + '", 0);'
             print(addDevice)
             cursor.execute(addDevice)
 

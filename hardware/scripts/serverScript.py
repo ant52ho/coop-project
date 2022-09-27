@@ -8,6 +8,7 @@ import subprocess
 import sqlite3
 from threading import Thread
 import threading
+from projectConf import *
 
 
 # set to true when debugging
@@ -30,7 +31,10 @@ CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
 # Edge constants
 EDGE_PORT = 5060
 #EDGE_SERVER = socket.gethostbyname(socket.gethostname())
-EDGE_SERVER = '10.0.0.1'
+EDGE_SERVER = '20.0.0.1'
+EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
+# ie 20, or 192. Note: incomplete subnet, cheap id
+EDGE_ID = EDGE_SERVER.split(".")[0]
 EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
 
 # global variable
@@ -61,7 +65,7 @@ def isConnected(ip):
 
 
 def lastNode(sqliteConnection):
-    max_ip = "10.0.0.1"
+    max_ip = EDGE_SERVER
 
     # obtain the last node from the database
     try:
@@ -76,7 +80,7 @@ def lastNode(sqliteConnection):
 
         print(records)
         max_id = records[0]
-        return '10.0.0.' + str(max_id)
+        return EDGE_PARTIAL_SUBNET + "." + str(max_id)
 
     except sqlite3.Error as error:
         print("Failed to read data from sqlite table", error)
@@ -85,21 +89,21 @@ def lastNode(sqliteConnection):
 
 def lastConnectedNode(sqliteConnection):
     max_ip = lastNode(sqliteConnection)
-    max_id = int(max_ip[7:])
+    max_id = int(max_ip.split(".")[-1])
 
     for i in range(max_id, 0, -1):
-        test_ip = "10.0.0." + str(i)
+        test_ip = EDGE_PARTIAL_SUBNET + "." + str(i)
         if isConnected(test_ip):
             return test_ip
-    return "10.0.0.1"
+    return EDGE_SERVER
 
 
 # scanNodes scans all nodes and checks if any single is disconnected
 def scanNodes(sqliteConnection):
-    first = "10.0.0.1"
+    first = EDGE_SERVER
     last = lastNode(sqliteConnection)
-    for node in range(int(first[7:]), int(last[7:]) + 1):
-        ip = "10.0.0." + str(node)
+    for node in range(int(first.split(".")[-1]), int(last.split(".")[-1]) + 1):
+        ip = EDGE_PARTIAL_SUBNET + "." + str(node)
         if not isConnected(ip):
             return ip
     return first
@@ -152,26 +156,6 @@ def isAdHoc():
         wlanState.index("RUNNING")
     except ValueError:
         return False
-    return True
-
-# starts the IBSS server
-# note: it will error if wpa_supplicant doesn't have p2p_disabled=1
-# alternatively, I will just constantly enable ibss, and disable/enable
-# the interface to activate it
-
-
-def startIBSS(ip="", channel=4, essid='AHTest'):
-    print('starting ibss!')
-    if ip == "":
-        ip_twin = get_ip_linux("eth0")
-        ip = ip_twin[:5] + "1" + ip_twin[6:]
-    os.system('sudo ifup wlan0')
-    # os.system('sudo iwconfig wlan0 channel ' + str(channel)) # impossible on some pis
-    #os.system('sudo iwconfig wlan0 mode ad-hoc')
-    #os.system("sudo iwconfig wlan0 essid '" + essid + "'")
-    os.system('sudo ifconfig wlan0 ' + ip)
-    #os.system('sudo ip addr flush dev wlan0')
-    os.system('sudo ip route add 10.0.1.0/24 via ' + ip)
     return True
 
 
@@ -322,8 +306,9 @@ def maintainCloudClient():
 
 if __name__ == "__main__":
     print("initiating...")
-    os.system('sudo ifconfig eth0 10.0.0.1')
-    os.system('sudo ip route add 10.0.0.0/24 via 10.0.0.1')
+    os.system('sudo ifconfig eth0 ' + EDGE_SERVER)
+    os.system('sudo ip route add ' + EDGE_PARTIAL_SUBNET +
+              '.0/24 via ' + EDGE_SERVER)
     os.system('sudo service redis-server stop')
 
     # initiates the redis server
@@ -372,12 +357,12 @@ if __name__ == "__main__":
     dhcp_thread.start()
 
     # logs the current largest connection for client use
-    firstNode = '10.0.0.1'
+    firstNode = EDGE_SERVER
     r.set('firstNode', firstNode)
     r.set('lastNode', lastNode(sqliteConnection))
 
     # set redis bindings
-    r.config_set('bind', '127.0.0.1 10.0.0.1 -::1')
+    r.config_set('bind', '127.0.0.1 ' + EDGE_SERVER + ' -::1')
 
     while True:  # this will become a while loop in the future
         ethConnected = isConnected(lastNode(sqliteConnection))

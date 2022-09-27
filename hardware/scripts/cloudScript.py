@@ -7,7 +7,7 @@ import redis
 import os
 import time
 import datetime
-from conf import *
+from projectConf import *
 
 # user defined constants:
 HEADER = 128  # max str length for socket comm

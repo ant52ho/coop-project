@@ -5,6 +5,28 @@ Modifying the constants will change the nature of the program
 
 '''cloudscript constants'''
 
+'''serverScript constants'''
+
+# common constants
+HEADER = 128
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
+
+# Cloud constants
+CLOUD_PORT = 5050  # this port will have to change for edge server
+CLOUD_SERVER = "3.15.28.149"
+CLOUD_ADDR = (CLOUD_SERVER, CLOUD_PORT)
+
+# Edge constants
+EDGE_PORT = 5060
+#EDGE_SERVER = socket.gethostbyname(socket.gethostname())
+EDGE_SERVER = '20.0.0.1'
+EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
+# ie 20, or 192. Note: incomplete subnet, cheap id
+EDGE_ID = EDGE_SERVER.split(".")[0]
+EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
+
+
 '''clientscript constants'''
 # common constants
 HEADER = 128

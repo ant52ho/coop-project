@@ -13,7 +13,7 @@ import multiprocessing
 import signal
 from createConfs import *
 from collectSensorData import *
-from conf import *
+from projectConf import *
 
 ''' for sensor communication '''
 import minimalmodbus

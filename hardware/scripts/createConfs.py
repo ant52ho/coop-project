@@ -1,7 +1,63 @@
+from projectConf import *
+import fileinput
+import sys
+import os
+import subprocess
+
 CLIENT_INTERFACE = 'wlan0'
 AP_INTERFACE = 'wlan1'
 
 # adjusts settings for the if that's going to be the AP
+ipID = str(int(EDGE_SERVER.split(".")[0]) + 1)  # ie 21
+
+
+def replacement(file, previousw, nextw):
+    for line in fileinput.input(file, inplace=1):
+        line = line.replace(previousw, nextw)
+        sys.stdout.write(line)
+
+
+def configDefaultHostapd():
+    var1 = '#DAEMON_CONF=""'
+    var2 = 'DAEMON_CONF="/etc/hostapd/hostapd.conf"'
+    file = "/etc/default/hostapd"
+    replacement(file, var1, var2)
+
+
+def configSysctl():
+    var1 = "#net.ipv4.ip_forward=1"
+    var2 = "net.ipv4.ip_forward=1"
+    file = "/etc/sysctl.conf"
+    replacement(file, var1, var2)
+    os.system('sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"')
+
+
+def restoreIPTables():
+    try:
+        output = subprocess.check_output(
+            "egrep '^iptables-restore < /etc/iptables.ipv4.nat$' /etc/rc.local", shell=True)
+        return True
+    except subprocess.CalledProcessError:
+        pass
+
+    var1 = "exit 0"
+    var2 = "iptables-restore < /etc/iptables.ipv4.nat\n\nexit 0"
+    file = "/etc/rc.local"
+    replacement(file, var1, var2)
+
+    return True
+
+
+def natBetween(apInterface, clientInterface):
+    open('/etc/iptables.ipv4.nat', 'w').close()  # deleting file contents
+    os.system("sudo iptables -t nat -A POSTROUTING -o " +
+              clientInterface + " -j MASQUERADE")
+    os.system("sudo iptables -A FORWARD -i " + clientInterface + " -o " +
+              apInterface + " -m state --state RELATED,ESTABLISHED -j ACCEPT")
+    os.system("sudo iptables -A FORWARD -i " + apInterface +
+              " -o " + clientInterface + " -j ACCEPT")
+    os.system('sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"')
+    os.system("iptables-restore < /etc/iptables.ipv4.nat")
 
 
 def createDhcpcdConf(id):
@@ -18,7 +74,8 @@ def createDhcpcdConf(id):
     f.write("interface " + AP_INTERFACE + '\n')
     # f.write("metric 0")
     f.write("nohook wpa_supplicant" + '\n')
-    f.write("static ip_address=11.0." + str(id) + ".1/24" + '\n')  # 11.0.2.1
+    f.write("static ip_address=" + ipID + ".0." +
+            str(id) + ".1/24" + '\n')  # 21.0.2.1
     f.write("static routers=11.0." + str(id) + ".0" + '\n')
     f.close()
     return
@@ -29,10 +86,10 @@ def createDhcpcdConf(id):
 def createDnsmasqConf(id):
     f = open('/etc/dnsmasq.conf', "w")
     f.write("interface=" + AP_INTERFACE + "\n")
-    f.write("listen-address=11.0." + str(id) + ".1" + "\n")
+    f.write("listen-address=" + ipID + ".0." + str(id) + ".1" + "\n")
     f.write("server=8.8.8.8\n")
-    f.write("dhcp-range=11.0." + str(id) + ".2" +
-            ",11.0." + str(id) + ".255,12h\n")
+    f.write("dhcp-range=" + ipID + ".0." + str(id) + ".2" +
+            "," + ipID + ".0." + str(id) + ".255,12h\n")
     f.close()
     return
 

@@ -143,6 +143,13 @@ def getDHCPIp():
                 createDnsmasqConf(id)
                 createHostapdConf(id)
                 createWpaSupplicantConf(id)
+                configDefaultHostapd()
+                configSysctl()
+                restoreIPTables()
+                # nat between
+                apIf = 'wlan1'
+                clientIf = 'wlan0'
+                natBetween(apIf, clientIf)
 
         if (dhcpConnected and id != -1):
             return get_ip('eth0')

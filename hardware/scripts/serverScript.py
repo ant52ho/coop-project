@@ -9,6 +9,7 @@ import sqlite3
 from threading import Thread
 import threading
 from projectConf import *
+from createConfs import *
 
 
 # set to true when debugging
@@ -306,6 +307,19 @@ if __name__ == "__main__":
         print("unable to connect")
 
     print(r.get('hello'))
+
+    # configures the hotspot files
+    edgeId = EDGE_SERVER.split(".")[-1]
+    createDhcpcdConf(edgeId)
+    createDnsmasqConf(edgeId)
+    createHostapdConf(edgeId)
+    configDefaultHostapd()
+    configSysctl()
+    restoreIPTables()
+    # nat between
+    apIf = 'wlan1'
+    clientIf = 'eth0'
+    natBetween(apIf, clientIf)
 
     # starts edgeServer socket and cloudServer socket
     edgeThread = threading.Thread(

@@ -32,6 +32,17 @@ def configSysctl():
     os.system('sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"')
 
 
+def insertAt(file, line, value):
+    with open(file, "r") as f:
+        contents = f.readlines()
+
+    contents.insert(line, value)
+
+    with open(file, "w") as f:
+        contents = "".join(contents)
+        f.write(contents)
+
+
 def restoreIPTables():
     try:
         output = subprocess.check_output(
@@ -40,10 +51,16 @@ def restoreIPTables():
     except subprocess.CalledProcessError:
         pass
 
-    var1 = "exit 0"
-    var2 = "iptables-restore < /etc/iptables.ipv4.nat\n\nexit 0"
-    file = "/etc/rc.local"
-    replacement(file, var1, var2)
+    try:
+        output = subprocess.check_output(
+            "egrep -n '^exit 0$' /etc/rc.local", shell=True).decode("utf-8")
+        print(output)
+        lineNumber = int(output.split(":")[0])
+        insertAt("/etc/rc.local", lineNumber - 1,
+                 "\niptables-restore < /etc/iptables.ipv4.nat\n\n")
+        return True
+    except subprocess.CalledProcessError:
+        pass
 
     return True
 

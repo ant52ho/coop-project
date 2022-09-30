@@ -10,6 +10,7 @@ from threading import Thread
 import threading
 from projectConf import *
 from createConfs import *
+from sqlite3conf import *
 
 
 # set to true when debugging
@@ -333,14 +334,23 @@ if __name__ == "__main__":
     try:
         sqliteConnection = sqlite3.connect(
             '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
-        cursor = sqliteConnection.cursor()
         print("connected to sqlitedb!")
+        cursor = sqliteConnection.cursor()
+        # some sqlite init commands
+        # creates / ignores subnet table
+        cursor.execute(SQLITE_SUBNET_TABLE_CONF)
+        # creates / ignores maps table
+        cursor.execute(SQLITE_MAPS_TABLE_CONF)
+        # ensures only one subnet is possible
+        cursor.execute("DELETE FROM subnets")
+        # adds an appropriate subnet to current ip
+        cursor.execute(SQLITE_SUBNET_CONF)
+        # deletes table records if necessary
+        if dbRESET == True:
+            deleteTableRecords(sqliteConnection)
+
     except sqlite3.Error as error:
         print("failed to connect to sqlite db")
-
-    # deletes table records if necessary
-    if dbRESET == True:
-        deleteTableRecords(sqliteConnection)
 
     # timer variable for IBSS
     endAPTimer = 0

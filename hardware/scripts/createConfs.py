@@ -93,7 +93,7 @@ def createDhcpcdConf(id):
     f.write("nohook wpa_supplicant" + '\n')
     f.write("static ip_address=" + ipID + ".0." +
             str(id) + ".1/24" + '\n')  # 21.0.2.1
-    f.write("static routers=11.0." + str(id) + ".0" + '\n')
+    f.write("static routers=" + ipID + ".0." + str(id) + ".0" + '\n')
     f.close()
     return
 

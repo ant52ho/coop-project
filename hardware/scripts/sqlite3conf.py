@@ -13,12 +13,12 @@ INSERT INTO subnets (
                 domain_name_servers,
                 domain_name
             ) VALUES (
-                '{EDGE_PARTIAL_SUBNET + ".0/24"}'
+                '{EDGE_PARTIAL_SUBNET + ".0/24"}',
                 0,
                 14400,
-                '{EDGE_SERVER}'
+                '{EDGE_SERVER}',
                 '255.255.255.0',
-                '{EDGE_PARTIAL_SUBNET + ".255"}'
+                '{EDGE_PARTIAL_SUBNET + ".255"}',
                 NULL,
                 NULL,
                 NULL
@@ -40,7 +40,7 @@ CREATE TABLE subnets (
 );
 """
 
-SQLITE_MAPS_TABLE_CONF = """
+SQLITE_MAPS_TABLE_CONF_1 = """
 CREATE TABLE maps (
     id,
     mac TEXT PRIMARY KEY NOT NULL, -- The MAC address of the client to whom the IP and associated options will be passed.
@@ -51,12 +51,48 @@ CREATE TABLE maps (
     UNIQUE (ip, subnet, serial),
     FOREIGN KEY (subnet, serial) REFERENCES subnets (subnet, serial)
 );
-
+"""
+SQLITE_MAPS_TABLE_CONF_2 = """
 -- Case-insensitive MAC-lookups may be handled in-database using either of the following methods:
 --  - Put "COLLATE NOCASE" in the column-definition in maps:mac
 --  - Include the following index
 CREATE INDEX case_insensitive_macs ON maps (mac COLLATE NOCASE);
 """
+
+
+def initSqlite(sqliteConnection, dbReset):
+    try:
+        sqliteConnection = sqlite3.connect(
+            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+        print("connected to sqlitedb!")
+        cursor = sqliteConnection.cursor()
+        # some sqlite init commands
+        # checks if table exists
+        subnetTableExists = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
+        if subnetTableExists == []:
+            cursor.execute(SQLITE_SUBNET_TABLE_CONF)
+
+        mapsTableExists = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
+        if mapsTableExists == []:
+            cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
+            cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
+
+        # # ensures only one subnet is possible
+        cursor.execute("DELETE FROM subnets")
+        # # adds an appropriate subnet to current ip
+        cursor.execute(SQLITE_SUBNET_CONF)
+        # deletes table records if necessary
+
+        print(cursor.execute("select * from subnets").fetchall())
+
+    except sqlite3.Error as error:
+        print(error)
+        print("failed to connect to sqlite db")
+    finally:
+        sqliteConnection.commit()
+
 
 if __name__ == '__main__':
     try:
@@ -65,15 +101,29 @@ if __name__ == '__main__':
         print("connected to sqlitedb!")
         cursor = sqliteConnection.cursor()
         # some sqlite init commands
-        # creates / ignores subnet table
-        cursor.execute(SQLITE_SUBNET_TABLE_CONF)
-        # creates / ignores maps table
-        cursor.execute(SQLITE_MAPS_TABLE_CONF)
-        # ensures only one subnet is possible
+        # checks if table exists
+        subnetTableExists = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
+        if subnetTableExists == []:
+            cursor.execute(SQLITE_SUBNET_TABLE_CONF)
+
+        mapsTableExists = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
+        if mapsTableExists == []:
+            cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
+            cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
+
+        # # ensures only one subnet is possible
         cursor.execute("DELETE FROM subnets")
-        # adds an appropriate subnet to current ip
+        # # adds an appropriate subnet to current ip
         cursor.execute(SQLITE_SUBNET_CONF)
         # deletes table records if necessary
 
+        print(cursor.execute("select * from subnets").fetchall())
+
     except sqlite3.Error as error:
+        print(error)
         print("failed to connect to sqlite db")
+    finally:
+        sqliteConnection.commit()
+        sqliteConnection.close()

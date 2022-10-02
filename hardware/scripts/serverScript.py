@@ -286,6 +286,38 @@ def maintainCloudClient():
         print('loop')
 
 
+def initSqlite(sqliteConnection):
+    try:
+        sqliteConnection = sqlite3.connect(
+            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+        print("connected to sqlitedb!")
+        cursor = sqliteConnection.cursor()
+        # some sqlite init commands
+        # checks if table exists
+        subnetTableExists = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
+        if subnetTableExists == []:
+            cursor.execute(SQLITE_SUBNET_TABLE_CONF)
+
+        mapsTableExists = cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
+        if mapsTableExists == []:
+            cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
+            cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
+
+        # # ensures only one subnet is possible
+        cursor.execute("DELETE FROM subnets")
+        # # adds an appropriate subnet to current ip
+        cursor.execute(SQLITE_SUBNET_CONF)
+        # deletes table records if necessary
+
+    except sqlite3.Error as error:
+        print("SQLITE3 ERROR!:", error)
+        print("failed to connect to sqlite db")
+    finally:
+        sqliteConnection.commit()
+
+
 if __name__ == "__main__":
     print("initiating...")
     os.system('sudo ifconfig eth0 ' + EDGE_SERVER)
@@ -317,6 +349,8 @@ if __name__ == "__main__":
     configDefaultHostapd()
     configSysctl()
     restoreIPTables()
+    os.system("sudo service hostapd restart")
+    os.system("sudo service dnsmasq restart")
     # nat between
     apIf = 'wlan1'
     clientIf = 'eth0'
@@ -334,23 +368,11 @@ if __name__ == "__main__":
     try:
         sqliteConnection = sqlite3.connect(
             '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
-        print("connected to sqlitedb!")
-        cursor = sqliteConnection.cursor()
-        # some sqlite init commands
-        # creates / ignores subnet table
-        cursor.execute(SQLITE_SUBNET_TABLE_CONF)
-        # creates / ignores maps table
-        cursor.execute(SQLITE_MAPS_TABLE_CONF)
-        # ensures only one subnet is possible
-        cursor.execute("DELETE FROM subnets")
-        # adds an appropriate subnet to current ip
-        cursor.execute(SQLITE_SUBNET_CONF)
-        # deletes table records if necessary
+        initSqlite(sqliteConnection)
         if dbRESET == True:
             deleteTableRecords(sqliteConnection)
-
     except sqlite3.Error as error:
-        print("failed to connect to sqlite db")
+        print("SQLITE3 ERROR", error)
 
     # timer variable for IBSS
     endAPTimer = 0

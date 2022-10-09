@@ -54,75 +54,82 @@ def handle_client(conn, addr, r):
 
 
 def inputData(msg, r):
+    # sometimes incomplete strings might be sent. this is why everything will be
+    #  kept inside a try/except block
 
-    # based off of clientScript4.py updateStatus, keep in serverScript
-    if msg.split(":")[1] == "status":
-        msg = msg.split(":")
+    try:
+        # based off of clientScript4.py updateStatus, keep in serverScript
+        if msg.split(":")[1] == "status":
+            msg = msg.split(":")
 
-        statusDict = {
-            "True": "up",
-            "False": "down",
-        }
+            statusDict = {
+                "True": "up",
+                "False": "down",
+            }
 
-        msg[-1] = statusDict[msg[-1]]
+            msg[-1] = statusDict[msg[-1]]
 
-        cmdKey = (':').join(msg[2:4])
-        cmdValue = msg[-1]
+            cmdKey = (':').join(msg[2:4])
+            cmdValue = msg[-1]
 
-        r.set(cmdKey, cmdValue)
-        return True
+            r.set(cmdKey, cmdValue)
+            return True
 
-    # based on clientScript4.py sendData
-    if msg.split(":")[1] == "data":
-        # f:data:id,val,val,val...
-        data = msg.split(":")[-1].split(',')
-        # data = msg[2:].split(',')
+        # based on clientScript4.py sendData
+        if msg.split(":")[1] == "data":
+            # f:data:id,val,val,val...
+            data = msg.split(":")[-1].split(',')
+            # data = msg[2:].split(',')
 
-        id = 'sensor' + str(data[0])
-        # day = data[1]
+            id = 'sensor' + str(data[0])
+            # day = data[1]
 
-        # unixTime = int(time.mktime(
-        #     datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
+            # unixTime = int(time.mktime(
+            #     datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
 
-        # commands =  ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
+            # commands =  ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
 
-        unixTime = int(data[1])  # unit dependent on clientScript4, keep at "s"
+            # unit dependent on clientScript4, keep at "s"
+            unixTime = int(data[1])
 
-        # commands = DATAFORMAT
-        commands = DATAINDICES
+            # commands = DATAFORMAT
+            commands = DATAINDICES
 
-        # print(data)
-        if len(data) != len(DATAFORMAT):
-            print("wrong data format! data not stored", data)
-            return False
+            # print(data)
+            if len(data) != len(DATAFORMAT):
+                print("wrong data format! data not stored", data)
+                return False
 
-        for commandIndex in range(2, len(commands)):
+            for commandIndex in range(2, len(commands)):
 
-            # if sensor doesn't have data
-            if data[commandIndex] == "None":
-                continue
+                # if sensor doesn't have data
+                if data[commandIndex] == "None":
+                    continue
 
-            # 1 key for "all", one key for "averaged"
-            newKey = id + ":" + commands[commandIndex]
-            newKeyAll = id + ":" + commands[commandIndex] + ":all"
+                # 1 key for "all", one key for "averaged"
+                newKey = id + ":" + commands[commandIndex]
+                newKeyAll = id + ":" + commands[commandIndex] + ":all"
 
-            # creating aggregation key, and all key
-            if not r.exists(newKey):
-                r.ts().create(newKey, retention_msecs=RETENTIONCOMPACT)
+                # creating aggregation key, and all key
+                if not r.exists(newKey):
+                    r.ts().create(newKey, retention_msecs=RETENTIONCOMPACT)
 
-            if not r.exists(newKeyAll):
-                r.ts().create(newKeyAll)
+                if not r.exists(newKeyAll):
+                    r.ts().create(newKeyAll)
 
-            # creating the aggregation rule
-            try:
-                r.ts().createrule(newKeyAll, newKey, "avg", BUCKET)
-            except redis.exceptions.ResponseError:
-                pass
+                # creating the aggregation rule
+                try:
+                    r.ts().createrule(newKeyAll, newKey, "avg", BUCKET)
+                except redis.exceptions.ResponseError:
+                    pass
 
-            r.ts().add(key=newKeyAll, timestamp=unixTime,
-                       value=data[commandIndex], retention_msecs=RETENTIONALL, duplicate_policy='last')
-        print("stored in redis!")
-        return True
+                r.ts().add(key=newKeyAll, timestamp=unixTime,
+                           value=data[commandIndex], retention_msecs=RETENTIONALL, duplicate_policy='last')
+            print("stored in redis!")
+            return True
+    except Exception as e:
+        print(e)
+        pass
 
 
 def start():

@@ -502,7 +502,7 @@ if __name__ == "__main__":
 
     # acquire DHCP connection
     ip = getDHCPIp()
-    id = int(ip[7:])
+    id = int(ip.split(".")[-1])
     print("Device IP:", ip)
     print("Device ID:", id)
 

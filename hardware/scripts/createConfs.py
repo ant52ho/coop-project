@@ -4,9 +4,6 @@ import sys
 import os
 import subprocess
 
-CLIENT_INTERFACE = 'wlan0'
-AP_INTERFACE = 'wlan1'
-
 # adjusts settings for the if that's going to be the AP
 ipID = str(int(EDGE_SERVER.split(".")[0]) + 1)  # ie 21
 
@@ -22,6 +19,7 @@ def configDefaultHostapd():
     var2 = 'DAEMON_CONF="/etc/hostapd/hostapd.conf"'
     file = "/etc/default/hostapd"
     replacement(file, var1, var2)
+    print("Added hostapd to daemon!")
 
 
 def configSysctl():
@@ -30,6 +28,7 @@ def configSysctl():
     file = "/etc/sysctl.conf"
     replacement(file, var1, var2)
     os.system('sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"')
+    print("Enabled IPV4 forwarding!")
 
 
 def insertAt(file, line, value):
@@ -62,6 +61,8 @@ def restoreIPTables():
     except subprocess.CalledProcessError:
         pass
 
+    print("Restored IP tables!")
+
     return True
 
 
@@ -75,9 +76,10 @@ def natBetween(apInterface, clientInterface):
               " -o " + clientInterface + " -j ACCEPT")
     os.system('sudo sh -c "iptables-save > /etc/iptables.ipv4.nat"')
     os.system("iptables-restore < /etc/iptables.ipv4.nat")
+    print(f"Added Nat between AP {apInterface} and Client {clientInterface}")
 
 
-def createDhcpcdConf(id):
+def createDhcpcdConf(id, apInterface):
     f = open("/etc/dhcpcd.conf", "w")
     f.write('hostname' + '\n')
     f.write('clientid' + '\n')
@@ -88,32 +90,34 @@ def createDhcpcdConf(id):
     f.write('option interface_mtu' + '\n')
     f.write('require dhcp_server_identifier' + '\n')
     f.write('slaac private' + '\n')
-    f.write("interface " + AP_INTERFACE + '\n')
+    f.write("interface " + apInterface + '\n')
     # f.write("metric 0")
     f.write("nohook wpa_supplicant" + '\n')
     f.write("static ip_address=" + ipID + ".0." +
             str(id) + ".1/24" + '\n')  # 21.0.2.1
     f.write("static routers=" + ipID + ".0." + str(id) + ".0" + '\n')
     f.close()
+    print(f"Configured DHCP server at {ipID}.0.{id}.1/24")
     return
 
 # this is the DHCP server, and allocates IPs
 
 
-def createDnsmasqConf(id):
+def createDnsmasqConf(id, apInterface):
     f = open('/etc/dnsmasq.conf', "w")
-    f.write("interface=" + AP_INTERFACE + "\n")
+    f.write("interface=" + apInterface + "\n")
     f.write("listen-address=" + ipID + ".0." + str(id) + ".1" + "\n")
     f.write("server=8.8.8.8\n")
     f.write("dhcp-range=" + ipID + ".0." + str(id) + ".2" +
             "," + ipID + ".0." + str(id) + ".255,12h\n")
     f.close()
+    print(f"Configured Dnsmasq for the DHCP server at {ipID}.0.{id}.1")
     return
 
 
-def createHostapdConf(id):
+def createHostapdConf(id, apInterface):
     f = open("/etc/hostapd/hostapd.conf", "w")
-    f.write("interface=" + AP_INTERFACE + '\n')
+    f.write("interface=" + apInterface + '\n')
     f.write("driver=nl80211" + '\n')
     f.write("hw_mode=g" + '\n')
     f.write("channel=1" + '\n')
@@ -129,12 +133,13 @@ def createHostapdConf(id):
     f.write("ssid=APTest" + str(id) + '\n')
     f.write("wpa_passphrase=12345678" + '\n')
     f.close()
+    print(f"Configured AP credentials at APTest{id}")
     return
 
 
-def createWpaSupplicantConf(id):  # need to add on beginning
+def createWpaSupplicantConf(id, clientInterface):  # need to add on beginning
     f = open("/etc/wpa_supplicant/wpa_supplicant-" +
-             CLIENT_INTERFACE + ".conf", "w")
+             clientInterface + ".conf", "w")
     f.write("ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n")
     f.write("update_config=1\n")
     f.write("country=CA\n")
@@ -143,6 +148,8 @@ def createWpaSupplicantConf(id):  # need to add on beginning
     f.write('psk="12345678"' + '\n')
     f.write("}" + '\n')
     f.close()
+    print(
+        f"Configured wpa_supplicant for client {clientInterface} connecting to APTest{id - 1}")
     return
 
 
@@ -153,6 +160,7 @@ def createNetworkConf():
     f.write("iface wlan0 inet manual" + "\n")
     f.write("wpa-conf /etc/wpa_supplicant/wpa_supplicant-wlan0.conf" + "\n")
     f.close()
+    print(f"Configured network conf for dev wlan0 ")
 
 
 if __name__ == '__main__':

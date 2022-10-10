@@ -60,70 +60,70 @@ CREATE INDEX case_insensitive_macs ON maps (mac COLLATE NOCASE);
 """
 
 
-def initSqlite(sqliteConnection, dbReset):
-    try:
-        sqliteConnection = sqlite3.connect(
-            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
-        print("connected to sqlitedb!")
-        cursor = sqliteConnection.cursor()
-        # some sqlite init commands
-        # checks if table exists
-        subnetTableExists = cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
-        if subnetTableExists == []:
-            cursor.execute(SQLITE_SUBNET_TABLE_CONF)
+# def initSqlite(sqliteConnection, dbReset):
+#     try:
+#         sqliteConnection = sqlite3.connect(
+#             '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+#         print("connected to sqlitedb!")
+#         cursor = sqliteConnection.cursor()
+#         # some sqlite init commands
+#         # checks if table exists
+#         subnetTableExists = cursor.execute(
+#             "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
+#         if subnetTableExists == []:
+#             cursor.execute(SQLITE_SUBNET_TABLE_CONF)
 
-        mapsTableExists = cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
-        if mapsTableExists == []:
-            cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
-            cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
+#         mapsTableExists = cursor.execute(
+#             "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
+#         if mapsTableExists == []:
+#             cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
+#             cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
 
-        # # ensures only one subnet is possible
-        cursor.execute("DELETE FROM subnets")
-        # # adds an appropriate subnet to current ip
-        cursor.execute(SQLITE_SUBNET_CONF)
-        # deletes table records if necessary
+#         # # ensures only one subnet is possible
+#         cursor.execute("DELETE FROM subnets")
+#         # # adds an appropriate subnet to current ip
+#         cursor.execute(SQLITE_SUBNET_CONF)
+#         # deletes table records if necessary
 
-        print(cursor.execute("select * from subnets").fetchall())
+#         print(cursor.execute("select * from subnets").fetchall())
 
-    except sqlite3.Error as error:
-        print(error)
-        print("failed to connect to sqlite db")
-    finally:
-        sqliteConnection.commit()
+#     except sqlite3.Error as error:
+#         print(error)
+#         print("failed to connect to sqlite db")
+#     finally:
+#         sqliteConnection.commit()
 
 
-if __name__ == '__main__':
-    try:
-        sqliteConnection = sqlite3.connect(
-            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
-        print("connected to sqlitedb!")
-        cursor = sqliteConnection.cursor()
-        # some sqlite init commands
-        # checks if table exists
-        subnetTableExists = cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
-        if subnetTableExists == []:
-            cursor.execute(SQLITE_SUBNET_TABLE_CONF)
+# if __name__ == '__main__':
+#     try:
+#         sqliteConnection = sqlite3.connect(
+#             '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+#         print("connected to sqlitedb!")
+#         cursor = sqliteConnection.cursor()
+#         # some sqlite init commands
+#         # checks if table exists
+#         subnetTableExists = cursor.execute(
+#             "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
+#         if subnetTableExists == []:
+#             cursor.execute(SQLITE_SUBNET_TABLE_CONF)
 
-        mapsTableExists = cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
-        if mapsTableExists == []:
-            cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
-            cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
+#         mapsTableExists = cursor.execute(
+#             "SELECT name FROM sqlite_master WHERE type='table' AND name='maps';").fetchall()
+#         if mapsTableExists == []:
+#             cursor.execute(SQLITE_MAPS_TABLE_CONF_1)
+#             cursor.execute(SQLITE_MAPS_TABLE_CONF_2)
 
-        # # ensures only one subnet is possible
-        cursor.execute("DELETE FROM subnets")
-        # # adds an appropriate subnet to current ip
-        cursor.execute(SQLITE_SUBNET_CONF)
-        # deletes table records if necessary
+#         # # ensures only one subnet is possible
+#         cursor.execute("DELETE FROM subnets")
+#         # # adds an appropriate subnet to current ip
+#         cursor.execute(SQLITE_SUBNET_CONF)
+#         # deletes table records if necessary
 
-        print(cursor.execute("select * from subnets").fetchall())
+#         print(cursor.execute("select * from subnets").fetchall())
 
-    except sqlite3.Error as error:
-        print(error)
-        print("failed to connect to sqlite db")
-    finally:
-        sqliteConnection.commit()
-        sqliteConnection.close()
+#     except sqlite3.Error as error:
+#         print(error)
+#         print("failed to connect to sqlite db")
+#     finally:
+#         sqliteConnection.commit()
+#         sqliteConnection.close()

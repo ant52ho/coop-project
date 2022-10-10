@@ -27,6 +27,11 @@ EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
 EDGE_ID = EDGE_SERVER.split(".")[0]
 EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
 
+EDGE_WLAN_ID = int(EDGE_ID) + 1
+EDGE_WLAN_SERVER = f"{EDGE_WLAN_ID}.0.1.1"
+EDGE_WLAN_PORT = 5070
+EDGE_WLAN_ADDR = (EDGE_WLAN_SERVER, EDGE_WLAN_PORT)
+
 '''redis database constants'''
 # bucket retention in redis (s)
 BUCKET = 3600

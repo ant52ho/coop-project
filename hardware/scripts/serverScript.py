@@ -10,7 +10,7 @@ from threading import Thread
 import threading
 from projectConf import *
 from createConfs import *
-from sqlite3conf import *
+from sqlite3Conf import *
 
 
 # set to true when debugging
@@ -228,9 +228,8 @@ def send(msg, cloudClient):
         cloudClient.send(message)
         print(cloudClient.recv(HEADER).decode(FORMAT))
         return True
-    # except AttributeError:  # cloud client isn't connected
     except Exception as e:
-        print(e)
+        print("Error in sending message!", e)
         return False
 
 
@@ -323,9 +322,9 @@ if __name__ == "__main__":
     os.system('sudo ifconfig eth0 ' + EDGE_SERVER)
     os.system('sudo ip route add ' + EDGE_PARTIAL_SUBNET +
               '.0/24 via ' + EDGE_SERVER)
-    os.system('sudo service redis-server stop')
 
     # initiates the redis server
+    os.system('sudo service redis-server stop')
     redis_thread = Thread(target=restartRedis, args=('redisTest.conf',))
     redis_thread.start()
     time.sleep(3)
@@ -337,7 +336,7 @@ if __name__ == "__main__":
     try:
         r.ping()
     except Exception as e:
-        print("unable to connect")
+        print("unable to connect to redis")
 
     print(r.get('hello'))
 
@@ -353,7 +352,7 @@ if __name__ == "__main__":
     os.system("sudo service dnsmasq restart")
     # nat between
     apIf = 'wlan1'
-    clientIf = 'eth0'
+    clientIf = 'eth'
     natBetween(apIf, clientIf)
 
     # starts edgeServer socket and cloudServer socket

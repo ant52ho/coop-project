@@ -35,9 +35,9 @@ EDGE_WLAN_ADDR = (EDGE_WLAN_SERVER, EDGE_WLAN_PORT)
 '''redis database constants'''
 # bucket retention in redis (s)
 BUCKET = 3600
-# all key retention duration in redis
-RETENTIONALL = BUCKET * 2 * 1000  # retention in milliseconds
-RETENTIONCOMPACT = 0  # in ms. 0 or None mean indefinite
+# all key retention duration in redis (s)
+RETENTIONALL = BUCKET * 2
+RETENTIONCOMPACT = 0  # in s. 0 or None mean indefinite
 
 '''sensor data formatting'''
 # DATAFORMAT is the format which data is inputted from clientScript

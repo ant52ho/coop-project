@@ -12,34 +12,6 @@ from projectConf import *
 from createConfs import *
 from sqlite3Conf import *
 
-EDGE_SERVER = '20.0.0.1'
-
-'''Take extra care to remember the above ^'''
-
-'''socket, server constants'''
-HEADER = 128  # max str length for socket comm
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-
-
-CLOUD_PORT = 5050  # this port will have to change for edge server
-CLOUD_PRIVATE_SERVER = '172.31.41.126'  # must be ec2 private ip address
-CLOUD_PRIVATE_ADDR = (CLOUD_PRIVATE_SERVER, CLOUD_PORT)
-CLOUD_PUBLIC_SERVER = "3.15.28.149"
-CLOUD_PUBLIC_ADDR = (CLOUD_PUBLIC_SERVER, CLOUD_PORT)
-
-EDGE_PORT = 5060
-EDGE_PARTIAL_SUBNET = ".".join(EDGE_SERVER.split(".")[:3])  # ie 20.0.0
-# ie 20, or 192. Note: incomplete subnet, cheap id
-EDGE_ID = EDGE_SERVER.split(".")[0]
-EDGE_ADDR = (EDGE_SERVER, EDGE_PORT)
-
-EDGE_WLAN_ID = int(EDGE_ID) + 1
-EDGE_WLAN_SERVER = f"{EDGE_WLAN_ID}.0.1.1"
-EDGE_WLAN_PORT = 5070
-EDGE_WLAN_ADDR = (EDGE_WLAN_SERVER, EDGE_WLAN_PORT)
-
-
 dbRESET = True
 # global variable
 cloudClientGlobal = None
@@ -222,6 +194,8 @@ def forward(msg, cloudClient):
                 else:
                     send(msg, cloudClient)
                     nodeRec[id] = time
+        elif cmd == "status":
+            send(msg, cloudClient)
     except Exception as e:
         print("Failed to send forward message to Cloud!:", e)
         return

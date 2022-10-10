@@ -15,6 +15,10 @@ from createConfs import *
 from collectSensorData import *
 from projectConf import *
 
+'''Global variables'''
+sensorData = []
+
+
 ''' Universal functions '''
 
 
@@ -116,8 +120,13 @@ def connectDHCP():
     edgeSubnet = EDGE_PARTIAL_SUBNET  # ie. 20.0.0
     for i in range(15):  # waits up to 30s to acquire + update address
         curAddr = get_ip_linux("eth0")
+        brIP = ""
+        if ifExists('br0'):
+            brIP = get_ip_linux('br0')
+
         subnet = getPartialSubnet(curAddr)  # ie. 20.0.0
-        if subnet == edgeSubnet:
+        brSubnet = getPartialSubnet(brIP)
+        if subnet == edgeSubnet or brSubnet == edgeSubnet:
             print("Dhcp connected with eth IP", curAddr)
             return True
         print("Connecting to DHCP...")
@@ -225,8 +234,8 @@ def sendData(edgeClient, id, interface):
     statusThread.start()
 
     while True:
-        retArr = collectSensorData(id)
-        select = f'f:data:{interface}:' + ','.join(retArr)
+        global sensorData
+        select = f'f:data:{interface}:' + ','.join(sensorData)
         print(select)
         retval = send(select, edgeClient)
         if not retval:
@@ -306,6 +315,13 @@ def startupWifi(routerIP):
         print("Failed to connect to AP DHCP, retrying...")
 
 
+def collectData(id):
+    global sensorData
+    while True:
+        sensorData = collectSensorData(id)
+        time.sleep(2.8)
+
+
 if __name__ == "__main__":
     # refreshing params
     os.system("sudo ip addr flush eth0")
@@ -330,6 +346,11 @@ if __name__ == "__main__":
     ethMessageThread = threading.Thread(
         target=maintainEthMessaging, args=(id, ))
     ethMessageThread.start()
+
+    # collect data thread
+    dataThread = threading.Thread(
+        target=collectData, args=(id, ))
+    dataThread.start()
 
     # maintaining wlan messaging
     wlanMessageThread = threading.Thread(

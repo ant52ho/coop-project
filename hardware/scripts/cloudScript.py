@@ -77,20 +77,16 @@ def inputData(msg, r):
 
         # based on clientScript4.py sendData
         if msg.split(":")[1] == "data":
-            # f:data:id,val,val,val...
+            # f:data:source:id,val,val,val...
             data = msg.split(":")[-1].split(',')
-            # data = msg[2:].split(',')
-
             id = 'sensor' + str(data[0])
-            # day = data[1]
-
-            # unixTime = int(time.mktime(
-            #     datetime.datetime.strptime(day, "%Y-%m-%d").timetuple()))
-
-            # commands =  ["id", "day", "tempHigh", "tempLow", "wind", "rain"]
-
             # unit dependent on clientScript4, keep at "s"
-            unixTime = int(data[1])
+
+            # since the indv. raspi time may be inaccurate, we use the clock
+            # of the cloud server, which must be synced.
+            # in other words, the timestamp serves only as an ID.
+            unixTime = int(time.time())
+            print(unixTime)
 
             # commands = DATAFORMAT
             commands = DATAINDICES
@@ -113,19 +109,24 @@ def inputData(msg, r):
                 # creating aggregation key, and all key
                 if not r.exists(newKey):
                     r.ts().create(newKey, retention_msecs=RETENTIONCOMPACT)
+                    print(
+                        f"Created new compacted keyset {newKey} lasting {RETENTIONCOMPACT} secs!")
 
                 if not r.exists(newKeyAll):
-                    r.ts().create(newKeyAll)
+                    r.ts().create(newKeyAll, retention_msecs=RETENTIONALL)
+                    print(
+                        f"Created new keyset {newKeyAll} lasting {RETENTIONALL} secs!")
 
                 # creating the aggregation rule
                 try:
                     r.ts().createrule(newKeyAll, newKey, "avg", BUCKET)
+                    print(
+                        f"Created new aggregation rule to move keys from {newKeyAll} to {newKey} in {BUCKET}s buckets")
                 except redis.exceptions.ResponseError:
                     pass
 
                 r.ts().add(key=newKeyAll, timestamp=unixTime,
                            value=data[commandIndex], retention_msecs=RETENTIONALL, duplicate_policy='last')
-            print("stored in redis!")
             return True
     except Exception as e:
         print(e)

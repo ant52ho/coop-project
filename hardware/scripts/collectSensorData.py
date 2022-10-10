@@ -103,29 +103,28 @@ def collectSensorData(id):
     instrument5.close_port_after_each_call = True
     instrument6.close_port_after_each_call = True
 
-    while True:
-        curTime = str(int(time.time()))
-        retArr = [str(id), curTime]
+    curTime = str(int(time.time()))
+    retArr = [str(id), curTime]
 
-        h2 = readSensepoint(instrument1, "h2")
-        isobutylene = readSensepoint(instrument2, "isobutylene")
-        ammonia = readSensepoint(instrument3, "ammonia")
-        propane = readSensepoint(instrument4, "propane")
-        chlorine = readSensepoint(instrument5, "chlorine")
+    h2 = readSensepoint(instrument1, "h2")
+    isobutylene = readSensepoint(instrument2, "isobutylene")
+    ammonia = readSensepoint(instrument3, "ammonia")
+    propane = readSensepoint(instrument4, "propane")
+    chlorine = readSensepoint(instrument5, "chlorine")
 
-        values = readViconox(instrument6)
-        vis = values[0]
-        co = values[1]
-        temp = values[2]
-        humidity = values[3]
-        no = values[4]
-        no2 = values[5]
-        nox = values[6]
+    values = readViconox(instrument6)
+    vis = values[0]
+    co = values[1]
+    temp = values[2]
+    humidity = values[3]
+    no = values[4]
+    no2 = values[5]
+    nox = values[6]
 
-        retArr = [str(id), curTime, h2, isobutylene, ammonia,
-                  propane, chlorine, vis, co, temp, humidity, no, no2, nox]
+    retArr = [str(id), curTime, h2, isobutylene, ammonia,
+              propane, chlorine, vis, co, temp, humidity, no, no2, nox]
 
-        return retArr
+    return retArr
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import redis
 '''BELOW CONSTANT MUST BE THE SAME AS FROM projectConf.py'''
 
 EDGE_SERVER = '20.0.0.1'
+SQLITE_PATH = '/home/pi/coop-project/hardware/dhcp/staticDHCPd/conf/dhcp.sqlite3'
 
 '''TAKE EXTRA CARE ^'''
 
@@ -38,7 +39,7 @@ DHCP_SERVER_IP = EDGE_SERVER
 # For details, see the configuration guide in the documentation.
 DATABASE_ENGINE = 'SQLite'
 
-SQLITE_FILE = '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3'
+SQLITE_FILE = SQLITE_PATH
 
 # Server behaviour
 ALLOW_LOCAL_DHCP = True
@@ -63,8 +64,7 @@ def filterPacket(packet, method, mac, client_ip, relay_ip, port):
     if method == "DISCOVER":
         try:
             # connect to sqlite db
-            sqliteConnection = sqlite3.connect(
-                '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+            sqliteConnection = sqlite3.connect(SQLITE_PATH)
             cursor = sqliteConnection.cursor()
             print("connected to SQLite")
 

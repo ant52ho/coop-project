@@ -168,5 +168,5 @@ if __name__ == '__main__':
     createDhcpcdConf(1)
     # createHostapdConf(1)
     # createWpaSupplicantConf(1)
-    print("created new dnsmasq conf")
-    print("created new dhcpcd conf")
+    print("Created new dnsmasq conf")
+    print("Created new dhcpcd conf")

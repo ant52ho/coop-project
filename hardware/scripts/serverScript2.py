@@ -13,10 +13,13 @@ from createConfs import *
 from sqlite3Conf import *
 
 dbRESET = True
-# global variable
+
+'''Global variables'''
 cloudClientGlobal = None
 nodeRec = {}  # records last node data
 ethAllConnected = True  # determines if eth is all connected
+
+'''helper functions'''
 
 
 def get_ip_linux(interface: str) -> str:
@@ -73,8 +76,7 @@ def restartRedis(conf):
 
 def initSqlite(sqliteConnection):
     try:
-        sqliteConnection = sqlite3.connect(
-            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+        sqliteConnection = sqlite3.connect(SQLITE_PATH)
         print("connected to sqlitedb!")
         cursor = sqliteConnection.cursor()
         # some sqlite init commands
@@ -241,7 +243,7 @@ def startWlanEdgeServer():
 
 
 def startDHCP():
-    os.system('sudo python /home/pi/dhcp/staticDHCPd/staticDHCPd')
+    os.system(f'sudo python {DHCP_PATH}')
 
 
 def lastNode(sqliteConnection):
@@ -289,8 +291,7 @@ def checkConnectivity():
     # initiates sqlite connection
     sqliteConnection = ""
     try:
-        sqliteConnection = sqlite3.connect(
-            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+        sqliteConnection = sqlite3.connect(SQLITE_PATH)
         initSqlite(sqliteConnection)
         if dbRESET == True:
             deleteTableRecords(sqliteConnection)
@@ -308,8 +309,7 @@ def checkConnectivity():
 if __name__ == '__main__':
     apInterface = 'wlan1'
     clientInterface = 'eth1'
-
-    redis_thread = Thread(target=restartRedis, args=('redisTest.conf',))
+    redis_thread = Thread(target=restartRedis, args=(REDIS_EDGE_PATH,))
     redis_thread.start()
 
     configEdgeEth()
@@ -329,10 +329,10 @@ if __name__ == '__main__':
     print(r.get('hello'))
 
     # initiates sqlite connection
+
     sqliteConnection = ""
     try:
-        sqliteConnection = sqlite3.connect(
-            '/home/pi/dhcp/staticDHCPd/conf/dhcp.sqlite3')
+        sqliteConnection = sqlite3.connect(SQLITE_PATH)
         initSqlite(sqliteConnection)
         if dbRESET == True:
             deleteTableRecords(sqliteConnection)

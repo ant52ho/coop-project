@@ -6,8 +6,14 @@ Modifying the constants will change the nature of the program
 '''The below constant MUST be the as in the dhcp server's conf.py'''
 
 EDGE_SERVER = '20.0.0.1'
+SQLITE_PATH = '/home/pi/coop-project/hardware/dhcp/staticDHCPd/conf/dhcp.sqlite3'
 
 '''Take extra care to remember the above ^'''
+
+
+''' Paths '''
+DHCP_PATH = '/home/pi/coop-project/hardware/dhcp/staticDHCPd/staticDHCPd'
+REDIS_EDGE_PATH = '/home/pi/coop-project/hardware/redisFiles/redisTest.conf'
 
 '''socket, server constants'''
 HEADER = 128  # max str length for socket comm

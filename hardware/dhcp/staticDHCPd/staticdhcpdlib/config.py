@@ -53,7 +53,7 @@ conf = None
 #     conf_search_paths = ['dhcp/staticDHCPd/conf',
 #                          os.path.join(os.getcwd(), 'conf'), '/etc/staticDHCPd']
 
-conf_search_paths = ['dhcp/staticDHCPd/conf',
+conf_search_paths = ['/home/pi/coop-project/hardware/scripts', 'dhcp/staticDHCPd/conf',
                      os.path.join(os.getcwd(), 'conf'), '/etc/staticDHCPd']
 
 for conf_path in conf_search_paths:
@@ -61,7 +61,7 @@ for conf_path in conf_search_paths:
     sys.path.append(conf_path)
     try:  # Attempt to import conf.py from the path
         conf = SourceFileLoader('conf', os.path.join(
-            conf_path, 'conf.py')).load_module()
+            conf_path, 'dhcpConf.py')).load_module()
         print(repr(conf))
         print(dir(conf))
     except IOError:

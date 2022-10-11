@@ -156,12 +156,16 @@ def maintainCloudClient():
 
 
 def recv(conn, addr):
-    msg = conn.recv(HEADER).decode(FORMAT)
-    if not msg:
-        return
-    print(f"[{addr}] {msg}")
-    conn.send("Msg received".encode(FORMAT))
-    return msg
+    try:
+        msg = conn.recv(HEADER).decode(FORMAT)
+        if not msg:
+            return
+        print(f"[{addr}] {msg}")
+        conn.send("Msg received".encode(FORMAT))
+        return msg
+    except Exception as e:
+        print("Error in receiving message!", e)
+        return False
 
 
 def forward(msg, cloudClient):

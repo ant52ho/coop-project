@@ -14,6 +14,7 @@ SQLITE_PATH = '/home/pi/coop-project/hardware/dhcp/staticDHCPd/conf/dhcp.sqlite3
 ''' Paths '''
 DHCP_PATH = '/home/pi/coop-project/hardware/dhcp/staticDHCPd/staticDHCPd'
 REDIS_EDGE_PATH = '/home/pi/coop-project/hardware/redisFiles/redisTest.conf'
+REDIS_CLOUD_PATH = '/home/pi/coop-project/hardware/redisFiles/redisCloud.conf'
 
 '''socket, server constants'''
 HEADER = 128  # max str length for socket comm

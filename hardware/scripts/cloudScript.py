@@ -2,7 +2,7 @@
 #   socket connection and handles database entries and querying
 
 import socket
-import threading
+from threading import Thread
 import redis
 import os
 import time
@@ -16,8 +16,8 @@ def resetRedisKeys():
 
 
 def restartRedis(conf):
-    print("server starting...")
-    os.system('killall redis-server ' + conf)
+    print("Cloud server starting...")
+    os.system('killall redis-server ')
     os.system('sudo redis-server ' + conf)
 
 
@@ -135,12 +135,9 @@ def inputData(msg, r):
 
 def start():
     # os.system('sudo service redis-server stop')
-
-    # # initiates the redis server
-    # redis_thread = threading.Thread(
-    #     target=restartRedis, args=("redisCloud.conf",))
-    # redis_thread.start()
-    # time.sleep(3)
+    redis_thread = Thread(target=restartRedis, args=(REDIS_CLOUD_PATH,))
+    redis_thread.start()
+    time.sleep(5)
 
     # connects to the redis server
     r = redis.Redis(host='127.0.0.1', port=6379, decode_responses=True)
@@ -163,9 +160,8 @@ def start():
     print(f"[LISTENING] Server is listening on {CLOUD_PUBLIC_SERVER}")
     while True:
         conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr, r))
+        thread = Thread(target=handle_client, args=(conn, addr, r))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
 
 if __name__ == '__main__':

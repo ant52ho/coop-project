@@ -285,6 +285,11 @@ def maintainEthMessaging(id):
 
 
 def maintainWlanMessaging(id):
+    # wlan conf
+    edgeIDPlus1 = str(int(EDGE_ID) + 1)
+    routerIP = edgeIDPlus1 + ".0." + str(id - 1) + ".1"
+    startupWifi(routerIP)
+
     while True:
         try:
             edgeWlanClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -332,11 +337,6 @@ if __name__ == "__main__":
     id = int(ip.split(".")[-1])
     print("Device IP:", ip)
     print("Device ID:", id)
-
-    # wlan conf
-    edgeIDPlus1 = str(int(EDGE_ID) + 1)
-    routerIP = edgeIDPlus1 + ".0." + str(id - 1) + ".1"
-    startupWifi(routerIP)
 
     # creating a bridge when possible
     bridgeThread = threading.Thread(target=maintainBridge, args=(id, ))

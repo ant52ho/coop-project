@@ -330,8 +330,6 @@ if __name__ == '__main__':
     except Exception as e:
         print("unable to connect to redis")
 
-    print(r.get('hello'))
-
     # initiates sqlite connection
 
     sqliteConnection = ""

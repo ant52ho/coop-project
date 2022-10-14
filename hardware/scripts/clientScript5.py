@@ -116,21 +116,23 @@ def connectDHCP():
     # this connects the raspi to the DHCP server
     print("Attempting to connect to dhcp")
     os.system('sudo dhclient eth0 -p 1112 -v')
+    try:
+        edgeSubnet = EDGE_PARTIAL_SUBNET  # ie. 20.0.0
+        for i in range(15):  # waits up to 30s to acquire + update address
+            curAddr = get_ip_linux("eth0")
+            brIP = ""
+            if ifExists('br0'):
+                brIP = get_ip_linux('br0')
 
-    edgeSubnet = EDGE_PARTIAL_SUBNET  # ie. 20.0.0
-    for i in range(15):  # waits up to 30s to acquire + update address
-        curAddr = get_ip_linux("eth0")
-        brIP = ""
-        if ifExists('br0'):
-            brIP = get_ip_linux('br0')
-
-        subnet = getPartialSubnet(curAddr)  # ie. 20.0.0
-        brSubnet = getPartialSubnet(brIP)
-        if subnet == edgeSubnet or brSubnet == edgeSubnet:
-            print("Dhcp connected with eth IP", curAddr)
-            return True
-        print("Connecting to DHCP...")
-        time.sleep(2)
+            subnet = getPartialSubnet(curAddr)  # ie. 20.0.0
+            brSubnet = getPartialSubnet(brIP)
+            if subnet == edgeSubnet or brSubnet == edgeSubnet:
+                print("Dhcp connected with eth IP", curAddr)
+                return True
+            print("Connecting to DHCP...")
+            time.sleep(2)
+    except Exception as e:
+        pass
 
     print("Failed to set edge Wifi IP")
     os.system('sudo dhclient -r eth0')

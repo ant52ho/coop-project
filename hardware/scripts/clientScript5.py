@@ -118,7 +118,7 @@ def connectDHCP():
     os.system('sudo dhclient eth0 -p 1112 -v')
     try:
         edgeSubnet = EDGE_PARTIAL_SUBNET  # ie. 20.0.0
-        for i in range(15):  # waits up to 30s to acquire + update address
+        for i in range(10):  # waits up to 30s to acquire + update address
             curAddr = get_ip_linux("eth0")
             brIP = ""
             if ifExists('br0'):
@@ -311,7 +311,7 @@ def startupWifi(routerIP):
         os.system(
             "sudo wpa_supplicant -iwlan0 -c/etc/wpa_supplicant/wpa_supplicant-wlan0.conf -B")
         os.system("sudo dhclient wlan0 -v")
-        for i in range(15):  # waits up to 30s to acquire + update address
+        for i in range(10):  # waits up to 30s to acquire + update address
             curAddr = get_ip_linux("wlan0")
             subnet = getPartialSubnet(curAddr)  # ie. 20.0.0
             if subnet == getPartialSubnet(routerIP):

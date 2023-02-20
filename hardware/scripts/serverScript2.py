@@ -81,6 +81,8 @@ def initSqlite(sqliteConnection):
         cursor = sqliteConnection.cursor()
         # some sqlite init commands
         # checks if table exists
+
+        # test if this works
         subnetTableExists = cursor.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='subnets';").fetchall()
         if subnetTableExists == []:
@@ -169,6 +171,7 @@ def recv(conn, addr):
 
 
 def forward(msg, cloudClient):
+    print("hello world")
     global ethAllConnected
     global nodeRec
     # f:data:eth:2,1665377260,None,None,None,0.0,None,None,None,None,None,None,None,None

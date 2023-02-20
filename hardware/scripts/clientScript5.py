@@ -20,8 +20,6 @@ sensorData = []
 
 
 ''' Universal functions '''
-
-
 def getPartialSubnet(ip):  # ie 20.0.0.5 -> 20.0.0
     return ".".join(ip.split(".")[:3])
 
@@ -230,35 +228,28 @@ def send(msg, edgeClient):
 
 
 # sendData reads data from nearby sensors and sends it + status data
+#   at a set interval
 def sendData(edgeClient, id, interface):
-    # sending status thread
-    statusThread = threading.Thread(target=updateStatus, args=(edgeClient, id))
-    statusThread.start()
-
     while True:
+        # send sensor data
         global sensorData
         select = f'f:data:{interface}:' + ','.join(sensorData)
         print(select)
-        retval = send(select, edgeClient)
-        if not retval:
+        sensorRet = send(select, edgeClient)
+
+        # send status data
+        isNeighbourConnected = isConnected(
+            EDGE_PARTIAL_SUBNET + "." + str(id - 1))
+        print('f:status:sensor' + str(id) + ':status:' +
+              str(isNeighbourConnected))
+        statusRet = send('f:status:sensor' + str(id) + ':status:' +
+                         str(isNeighbourConnected), edgeClient)
+
+        # check if successful sends
+        if not (sensorRet and statusRet):
             break
         # delay before next query
         time.sleep(3)
-
-
-def updateStatus(edgeClient, id):
-    while True:
-        isNeighbourConnected = isConnected(
-            EDGE_PARTIAL_SUBNET + "." + str(id - 1))
-        # f:status:sensor1:status:True
-        print('f:status:sensor' + str(id) + ':status:' +
-              str(isNeighbourConnected))
-        retval = send('f:status:sensor' + str(id) + ':status:' +
-                      str(isNeighbourConnected), edgeClient)
-
-        if not retval:
-            break
-        time.sleep(5)
 
 
 def startEdgeClient(edgeClient, id, interface):  # should exit if fails

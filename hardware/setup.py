@@ -73,7 +73,7 @@ Setup for client
 # sudo apt upgrade
 # sudo apt install python3-pip
 # sudo pip3 install redis
-# pip3 install pymodbus
+# pip3 install minimalmodbus
 # sudo apt-get install bridge-utils
 # sudo apt install dnsmasq
 # sudo apt install hostapd

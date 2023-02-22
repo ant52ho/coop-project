@@ -11,13 +11,16 @@ import threading
 from projectConf import *
 from createConfs import *
 from sqlite3Conf import *
+import awsHelpers
+
 
 dbRESET = True
 
 '''Global variables'''
-cloudClientGlobal = None
+# cloudClientGlobal = None
 nodeRec = {}  # records last node data
 ethAllConnected = True  # determines if eth is all connected
+awsConnGlobal = None
 
 '''helper functions'''
 
@@ -111,7 +114,7 @@ def deleteTableRecords(sqliteConnection):
     print("db resetting...")
     try:
         cursor = sqliteConnection.cursor()
-        #id, mac, ip, hostname, subnet, serial
+        # id, mac, ip, hostname, subnet, serial
 
         truncate_query = "DELETE FROM maps"
         cursor.execute(truncate_query)
@@ -122,39 +125,48 @@ def deleteTableRecords(sqliteConnection):
             sqliteConnection.commit()
 
 
-def send(msg, cloudClient):
-    try:
-        message = msg.encode(FORMAT)
-        cloudClient.send(message)
-        print(cloudClient.recv(HEADER).decode(FORMAT))
-        return True
-    except Exception as e:
-        print("Error in sending message! Try starting the cloud server?")
-        return False
+# def send(msg, cloudClient):
+#     try:
+#         message = msg.encode(FORMAT)
+#         cloudClient.send(message)
+#         print(cloudClient.recv(HEADER).decode(FORMAT))
+#         return True
+#     except Exception as e:
+#         print("Error in sending message! Try starting the cloud server?")
+#         return False
 
 
-def startCloudClient(cloudClient):
-    print("[STARTING] Cloud client is starting...")
+# def startCloudClient(cloudClient):
+#     print("[STARTING] Cloud client is starting...")
+#     while True:
+#         print('f:status:sensor1:status:True')
+#         retval = send('f:status:sensor1:status:True', cloudClient)
+#         if not retval:
+#             break
+#         time.sleep(3)
+
+
+# def maintainCloudClient():
+#     while True:
+#         try:
+#             cloudClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#             cloudClient.connect(CLOUD_PUBLIC_ADDR)
+#             global cloudClientGlobal # config
+#             cloudClientGlobal = cloudClient
+#             startCloudClient(cloudClient)  # updates status of sensor1
+#         except ConnectionRefusedError or OSError:
+#             time.sleep(3)
+#             print('Unable to connect to cloud server!, retrying...')
+#         # print('loop')
+
+def updateEdgeStatus(deviceShadowHandler):
+    '''
+    Updates aws IoT of the status of the edge
+        deviceShadowHandler: the aws iot device shadow
+    '''
     while True:
-        print('f:status:sensor1:status:True')
-        retval = send('f:status:sensor1:status:True', cloudClient)
-        if not retval:
-            break
+        awsHelpers.sendAWS("f:status:sensor1:status:True", deviceShadowHandler)
         time.sleep(3)
-
-
-def maintainCloudClient():
-    while True:
-        try:
-            cloudClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            cloudClient.connect(CLOUD_PUBLIC_ADDR)
-            global cloudClientGlobal
-            cloudClientGlobal = cloudClient
-            startCloudClient(cloudClient)  # updates status of sensor1
-        except ConnectionRefusedError or OSError:
-            time.sleep(3)
-            print('Unable to connect to cloud server!, retrying...')
-        # print('loop')
 
 
 def recv(conn, addr):
@@ -170,12 +182,22 @@ def recv(conn, addr):
         return False
 
 
-def forward(msg, cloudClient):
-    print("hello world")
-    global ethAllConnected
-    global nodeRec
+def forward(msg, awsConnection):
+    '''
+    Forwards a message to the aws IOT client
+
+        msg: special message formatted according to awsHelpers.sendAWS
+        awsConnection: connection to aws 
+
+    Example:
+    - forward(f:status:sensor2:status:True, deviceShadowHandler)
+    '''
     # f:data:eth:2,1665377260,None,None,None,0.0,None,None,None,None,None,None,None,None
     # f:status:sensor2:status:True
+
+    # using globals
+    global ethAllConnected
+    global nodeRec
 
     # note: sometimes sockets may receive incomplete strings. This leads to
     #   inconsistencies when indexing strings received from sockets, so
@@ -192,21 +214,22 @@ def forward(msg, cloudClient):
             source = interpret[2]
 
             if ethAllConnected and source == "eth":
-                send(msg, cloudClient)
+                awsHelpers.sendAWS(msg, awsConnection)
                 nodeRec[id] = time
 
             if not ethAllConnected:
+                # checks the last recorded time of a certain node
                 if id in nodeRec:
                     if nodeRec[id] != time:
-                        send(msg, cloudClient)
+                        awsHelpers.sendAWS(msg, awsConnection)
                         nodeRec[id] = time
                 else:
-                    send(msg, cloudClient)
+                    awsHelpers.sendAWS(msg, awsConnection)
                     nodeRec[id] = time
         elif cmd == "status":
-            send(msg, cloudClient)
+            awsHelpers.sendAWS(msg, awsConnection)
     except Exception as e:
-        print("Failed to send forward message to Cloud!:", e)
+        print("Failed to send forward message to AWS!:", e)
         return
 
 
@@ -217,7 +240,7 @@ def handle_client(conn, addr):
         if not msg:
             break
         if len(msg) >= 2 and msg[:2] == 'f:':
-            forward(msg, cloudClientGlobal)
+            forward(msg, awsConnGlobal)
     conn.close()
 
 
@@ -259,7 +282,7 @@ def lastNode(sqliteConnection):
     # obtain the last node from the database
     try:
         cursor = sqliteConnection.cursor()
-        #id, mac, ip, hostname, subnet, serial
+        # id, mac, ip, hostname, subnet, serial
 
         sqlite_max_query = "SELECT MAX(id) from maps"
         cursor.execute(sqlite_max_query)
@@ -316,6 +339,7 @@ def checkConnectivity():
 if __name__ == '__main__':
     apInterface = 'wlan1'
     clientInterface = 'eth1'
+
     redis_thread = Thread(target=restartRedis, args=(REDIS_EDGE_PATH,))
     redis_thread.start()
 
@@ -334,7 +358,6 @@ if __name__ == '__main__':
         print("unable to connect to redis")
 
     # initiates sqlite connection
-
     sqliteConnection = ""
     try:
         sqliteConnection = sqlite3.connect(SQLITE_PATH)
@@ -353,8 +376,16 @@ if __name__ == '__main__':
     # set redis bindings
     r.config_set('bind', '127.0.0.1 ' + EDGE_SERVER + ' -::1')
 
-    cloudThread = threading.Thread(target=maintainCloudClient)
-    cloudThread.start()
+    # connect to aws iot service
+    myAWSIoTMQTTShadowClient, deviceShadowHandler = awsHelpers.connect()
+    awsConnGlobal = deviceShadowHandler
+
+    # sends status of edge to aws iot
+    edgeStatus = threading.Thread(
+        target=updateEdgeStatus, args=(deviceShadowHandler, ))
+    edgeStatus.start()
+    # cloudThread = threading.Thread(target=maintainCloudClient)
+    # cloudThread.start()
 
     ethEdgeThread = threading.Thread(
         target=startEthEdgeServer)
